@@ -5,6 +5,7 @@ source 'https://rubygems.org'
 # Specify your gem's dependencies in better_batch.gemspec
 gemspec
 
+gem 'anbt-sql-formatter'
 gem 'rake'
 gem 'rspec'
 gem 'rubocop'

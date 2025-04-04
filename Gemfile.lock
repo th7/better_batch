@@ -6,6 +6,7 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
+    anbt-sql-formatter (0.1.2)
     ast (2.4.3)
     diff-lcs (1.6.1)
     json (2.10.2)
@@ -63,6 +64,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  anbt-sql-formatter
   better_batch!
   rake
   rspec
