@@ -17,10 +17,13 @@ module BetterBatch
   class MultiEnum
     def enums(count, &block)
       laziers = count.times.map { LazierEnum.new }
-      final = Enumerator.new do |final_yielder|
-        normies = nest(count, final_yielder, &block)
+      final = Enumerator.new do |final|
+        normies = nest(count, &block)
         normies.zip(laziers) do |normie, lazier|
-          lazier.call_other(normie)
+          normie.each_slice(lazier.per_slice) do |items|
+            lazier.each_slice_block.call(items)
+            items.each { |item| final << item }
+          end
         end
       end
       [final, *laziers]
@@ -28,17 +31,15 @@ module BetterBatch
 
     private
 
-    def nest(count, final_yielder, this_count=1, previous_yielders=[], normies_yielder=nil, &block)
+    def nest(count, this_count=1, previous_yielders=[], normies_yielder=nil, &block)
       if normies_yielder
         if count == this_count
           normies_yielder << Enumerator.new do |y|
-            lazier_yielder = LazierYielder.new(y, final_yielder)
-            block.call(*previous_yielders, lazier_yielder)
+            block.call(*previous_yielders, y)
           end
         else
           normies_yielder << Enumerator.new do |y|
-            lazier_yielder = LazierYielder.new(y, final_yielder)
-            nest(count, this_count + 1, previous_yielders << lazier_yielder, normies_yielder, &block)
+            nest(count, this_count + 1, previous_yielders << y, normies_yielder, &block)
           end
         end
       else
@@ -50,31 +51,15 @@ module BetterBatch
   end
 
   class LazierEnum
-    def call_other(other)
-      other.public_send(m, *args, **kwargs, &block)
+    attr_reader :per_slice, :each_slice_block
+
+    def ready?
+      @each_slice_block.is_a?(Proc)
     end
 
-    private
-
-    attr_reader :m, :args, :kwargs, :block
-
-    def method_missing(m, *args, **kwargs, &block)
-      @m = m
-      @args = args
-      @kwargs = kwargs
-      @block = block
-    end
-  end
-
-  class LazierYielder
-    def initialize(wrapped_yielder, final_yielder)
-      @wrapped_yielder = wrapped_yielder
-      @final_yielder = final_yielder
-    end
-
-    def <<(item)
-      @wrapped_yielder << item
-      @final_yielder << item
+    def each_slice(per_slice, &block)
+      @per_slice = per_slice
+      @each_slice_block = block
     end
   end
 end
