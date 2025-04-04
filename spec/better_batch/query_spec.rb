@@ -44,19 +44,92 @@ RSpec.describe BetterBatch::Query do
 
     let(:raw_expected_query) do
       <<~SQL
-        select the_table.the_primary_key as id, input.column_a, input.column_b, input.column_c, ordinal
-        from rows from (
-          jsonb_to_recordset($1)
-          as (column_a character varying(200), column_b bigint, column_c text)
-        ) with ordinality as input(column_a, column_b, column_c, ordinal)
-        left join the_table
-        using(column_b, column_c)
+        select id from (
+          select the_table.the_primary_key as id, input.column_a, input.column_b, input.column_c, ordinal
+          from rows from (
+            jsonb_to_recordset($1)
+            as (column_a character varying(200), column_b bigint, column_c text)
+          ) with ordinality as input(column_a, column_b, column_c, ordinal)
+          left join the_table
+          using(column_b, column_c)
+        ) order by ordinal
       SQL
     end
 
 
-    it 'returns the expected select query' do
+    it 'returns the expected upsert query' do
       is_expected.to eq(expected_query)
+    end
+  end
+
+  describe '#upsert' do
+    subject { format_sql(described_instance.upsert) }
+
+    let(:raw_expected_query) do
+      <<-SQL
+        with selected as (
+          select the_table.the_primary_key as id, input.column_a, input.column_b, input.column_c, ordinal
+          from rows from (
+            jsonb_to_recordset($1)
+            as (column_a character varying(200), column_b bigint, column_c text)
+          ) with ordinality as input(column_a, column_b, column_c, ordinal)
+          left join the_table
+          using(column_b, column_c)
+        )
+        ,inserted as (
+          insert into the_table (column_a, column_b, column_c, created_at, updated_at)
+          select distinct on (column_b, column_c)
+            column_a, column_b, column_c, now() as created_at, now() as updated_at
+          from selected
+          where id is null
+          returning id, column_b, column_c
+
+        )
+        ,updated as (
+          update the_table
+          set column_a = selected.column_a, updated_at = now()
+          from selected where the_table.id = selected.id
+        )
+        select coalesce(selected.id, inserted.id) as id
+        from selected left join inserted using(column_b, column_c)
+        order by selected.ordinal
+      SQL
+    end
+
+    it 'returns the full upsert query' do
+      is_expected.to eq(expected_query)
+    end
+
+    context 'columns and unique_columns are the same' do
+      let(:unique_columns) { columns }
+      let(:raw_expected_query) do
+        <<-SQL
+          with selected as (
+            select the_table.the_primary_key as id, input.column_a, input.column_b, input.column_c, ordinal
+            from rows from (
+              jsonb_to_recordset($1)
+              as (column_a character varying(200), column_b bigint, column_c text)
+            ) with ordinality as input(column_a, column_b, column_c, ordinal)
+            left join the_table
+            using(column_a, column_b, column_c)
+          )
+          ,inserted as (
+            insert into the_table (column_a, column_b, column_c, created_at, updated_at)
+            select distinct on (column_a, column_b, column_c)
+              column_a, column_b, column_c, now() as created_at, now() as updated_at
+            from selected
+            where id is null
+            returning id, column_a, column_b, column_c
+          )
+          select coalesce(selected.id, inserted.id) as id
+          from selected left join inserted using(column_a, column_b, column_c)
+          order by selected.ordinal
+        SQL
+      end
+
+      it 'returns the upsert query without updated section' do
+        is_expected.to eq(expected_query)
+      end
     end
   end
 end
