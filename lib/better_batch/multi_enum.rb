@@ -18,11 +18,9 @@ module BetterBatch
     def enums(count, &block)
       laziers = count.times.map { LazierEnum.new }
       final = Enumerator.new do |final|
-        normies = nest(count, final, &block)
+        normies = nest_normal_enums(count, final, &block)
         normies.zip(laziers) do |normie, lazier|
-          normie.each_slice(lazier.per_slice) do |items|
-            lazier.each_slice_block.call(items)
-          end
+          lazier.call_other(normie)
         end
       end
       [final, *laziers]
@@ -30,37 +28,41 @@ module BetterBatch
 
     private
 
-    def nest(count, final_yielder, this_count=1, previous_yielders=[], normies_yielder=nil, &block)
-      if normies_yielder
-        if count == this_count
+    def nest_normal_enums(count, final_yielder, this_count=1, previous_yielders=[], normies_yielder=nil, &block)
+      if normies_yielder.nil?
+        Enumerator.new do |y|
+          nest_normal_enums(count, final_yielder, this_count, previous_yielders, y, &block)
+        end
+      else
+        if count != this_count
           normies_yielder << Enumerator.new do |y|
             lazier_yielder = LazierYielder.new(y, final_yielder)
-            block.call(*previous_yielders, lazier_yielder)
+            nest_normal_enums(count, final_yielder, this_count + 1, previous_yielders << lazier_yielder, normies_yielder, &block)
           end
         else
           normies_yielder << Enumerator.new do |y|
             lazier_yielder = LazierYielder.new(y, final_yielder)
-            nest(count, final_yielder, this_count + 1, previous_yielders << lazier_yielder, normies_yielder, &block)
+            block.call(*previous_yielders, lazier_yielder)
           end
-        end
-      else
-        Enumerator.new do |y|
-          nest(count, final_yielder, this_count, previous_yielders, y, &block)
         end
       end
     end
   end
 
   class LazierEnum
-    attr_reader :per_slice, :each_slice_block
-
-    def ready?
-      @each_slice_block.is_a?(Proc)
+    def call_other(other)
+      other.public_send(m, *args, **kwargs, &block)
     end
 
-    def each_slice(per_slice, &block)
-      @per_slice = per_slice
-      @each_slice_block = block
+    private
+
+    attr_reader :m, :args, :kwargs, :block
+
+    def method_missing(m, *args, **kwargs, &block)
+      @m = m
+      @args = args
+      @kwargs = kwargs
+      @block = block
     end
   end
 
