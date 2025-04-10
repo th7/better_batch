@@ -1,18 +1,17 @@
+# frozen_string_literal: true
+
 require 'anbt-sql-formatter/formatter'
 
 require 'better_batch/query'
 
-
+# rubocop:disable RSpec/MultipleMemoizedHelpers
 RSpec.describe BetterBatch::Query do
   # modified from
   # https://github.com/sonota88/anbt-sql-formatter/blob/main/bin/anbt-sql-formatter
   def format_sql(src)
     rule = AnbtSql::Rule.new
     rule.keyword = AnbtSql::Rule::KEYWORD_LOWER_CASE
-    # %w(count sum substr date).each{|func_name|
-    #   rule.function_names << func_name.upcase
-    # }
-    rule.indent_string = "  "
+    rule.indent_string = '  '
     formatter = AnbtSql::Formatter.new(rule)
     formatter.format(src)
   end
@@ -56,10 +55,7 @@ RSpec.describe BetterBatch::Query do
       SQL
     end
 
-
-    it 'returns the expected upsert query' do
-      is_expected.to eq(expected_query)
-    end
+    it('returns the select query') { is_expected.to eq(expected_query) }
   end
 
   describe '#upsert' do
@@ -96,9 +92,7 @@ RSpec.describe BetterBatch::Query do
       SQL
     end
 
-    it 'returns the full upsert query' do
-      is_expected.to eq(expected_query)
-    end
+    it('returns the full upsert query') { is_expected.to eq(expected_query) }
 
     context 'columns and unique_columns are the same' do
       let(:unique_columns) { columns }
@@ -127,9 +121,8 @@ RSpec.describe BetterBatch::Query do
         SQL
       end
 
-      it 'returns the upsert query without updated section' do
-        is_expected.to eq(expected_query)
-      end
+      it('returns the no update query') { is_expected.to eq(expected_query) }
     end
   end
 end
+# rubocop:enable RSpec/MultipleMemoizedHelpers

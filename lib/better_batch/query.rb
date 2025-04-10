@@ -1,5 +1,50 @@
+# frozen_string_literal: true
+
 module BetterBatch
-  class Query
+  class Query # rubocop:disable Metrics/ClassLength
+    SELECT_TEMPLATE = <<~SQL
+      select id from (%<selected_inner>s)
+      order by ordinal
+    SQL
+
+    UPSERT_TEMPLATE = <<~SQL
+      with selected as (
+        %<selected_inner>s
+      )
+      ,inserted as (
+        %<inserted_inner>s
+      )
+      %<updated_clause>s
+      select coalesce(selected.id, inserted.id) as id
+      from selected left join inserted using(%<query_columns_text>s)
+      order by selected.ordinal
+    SQL
+
+    SELECTED_INNER_TEMPLATE = <<~SQL
+      select %<table_name>s.%<primary_key>s as id, %<input_columns_text>s, ordinal
+       from rows from (
+         jsonb_to_recordset($1)
+         as (%<typed_columns_text>s)
+       ) with ordinality as input(%<columns_text>s, ordinal)
+       left join %<table_name>s
+       using(%<query_columns_text>s)
+    SQL
+
+    INSERTED_INNER_TEMPLATE = <<~SQL
+      insert into %<table_name>s (%<columns_text>s, created_at, updated_at)
+        select distinct on (%<query_columns_text>s)
+          %<columns_text>s, now() as created_at, now() as updated_at
+        from selected
+        where id is null
+        returning id, %<query_columns_text>s
+    SQL
+
+    UPDATED_INNER_TEMPLATE = <<~SQL
+      update %<table_name>s
+      set %<update_columns_text>s, updated_at = now()
+      from selected where %<table_name>s.id = selected.id
+    SQL
+
     def initialize(table_name:, primary_key:, columns:, column_types:, unique_columns:)
       @table_name = table_name
       @primary_key = primary_key
@@ -9,28 +54,12 @@ module BetterBatch
     end
 
     def select
-      select_template = <<~SQL
-        select id from (%<selected_inner>s)
-        order by ordinal
-      SQL
-      format(select_template, selected_inner:)
+      format(SELECT_TEMPLATE, selected_inner:)
     end
 
     def upsert
-      upsert_template = <<~SQL
-        with selected as (
-          %<selected_inner>s
-        )
-        ,inserted as (
-          %<inserted_inner>s
-        )
-        %<updated_clause>s
-        select coalesce(selected.id, inserted.id) as id
-        from selected left join inserted using(%<query_columns_text>s)
-        order by selected.ordinal
-      SQL
       params = { selected_inner:, inserted_inner:, updated_clause:, query_columns_text: }
-      format(upsert_template, **params)
+      format(UPSERT_TEMPLATE, **params)
     end
 
     private
@@ -42,17 +71,9 @@ module BetterBatch
     end
 
     def build_selected_inner
-      selected_inner_template = <<~SQL
-        select %<table_name>s.%<primary_key>s as id, %<input_columns_text>s, ordinal
-         from rows from (
-           jsonb_to_recordset($1)
-           as (%<typed_columns_text>s)
-         ) with ordinality as input(%<columns_text>s, ordinal)
-         left join %<table_name>s
-         using(%<query_columns_text>s)
-      SQL
-      format(selected_inner_template, table_name:, primary_key:, input_columns_text:, typed_columns_text:, columns_text:,
-                                      query_columns_text:)
+      params = { table_name:, primary_key:, input_columns_text:, typed_columns_text:, columns_text:,
+                 query_columns_text: }
+      format(SELECTED_INNER_TEMPLATE, **params)
     end
 
     def inserted_inner
@@ -60,15 +81,7 @@ module BetterBatch
     end
 
     def build_inserted_inner
-      inserted_inner_template = <<~SQL
-        insert into %<table_name>s (%<columns_text>s, created_at, updated_at)
-          select distinct on (%<query_columns_text>s)
-            %<columns_text>s, now() as created_at, now() as updated_at
-          from selected
-          where id is null
-          returning id, %<query_columns_text>s
-      SQL
-      format(inserted_inner_template, table_name:, columns_text:, query_columns_text:)
+      format(INSERTED_INNER_TEMPLATE, table_name:, columns_text:, query_columns_text:)
     end
 
     def updated_clause
@@ -93,12 +106,7 @@ module BetterBatch
     end
 
     def build_updated_inner
-      updated_inner_template = <<~SQL
-        update %<table_name>s
-        set %<update_columns_text>s, updated_at = now()
-        from selected where %<table_name>s.id = selected.id
-      SQL
-      format(updated_inner_template, table_name:, update_columns_text:)
+      format(UPDATED_INNER_TEMPLATE, table_name:, update_columns_text:)
     end
 
     def input_columns_text
