@@ -11,7 +11,7 @@ For now, only Postgres is supported.
 In your Gemfile:
 ```ruby
 source 'https://rubygems.org'
-gem 'lazier_data'
+gem 'better_batch'
 ```
 Then:
 `bundle`
