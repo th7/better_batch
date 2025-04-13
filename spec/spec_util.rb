@@ -68,4 +68,8 @@ class SpecUtil
   def returning=(new_returning)
     args[:returning] = new_returning
   end
+
+  def primary_key
+    args[:primary_key]
+  end
 end

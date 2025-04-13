@@ -49,5 +49,10 @@ RSpec.describe BetterBatch::Selected do
       end
       it('returns the select query with more columns') { is_expected.to eq(expected_query) }
     end
+
+    context 'primary key is explicit in returning' do
+      before { spec_util.returning << spec_util.primary_key }
+      it('does not duplicate the column') { is_expected.to eq(expected_query) }
+    end
   end
 end

@@ -72,8 +72,8 @@ module BetterBatch
         :@column_types,
         :@unique_columns,
         :@returning
-      ].map { |var| "#{var}=#{instance_variable_get(var)}" }
-      "#<#{self.class.name}:#{vars}>"
+      ].map { |var| "#{var}=#{instance_variable_get(var).inspect}" }
+      "#<#{self.class.name}:#{vars.join(', ')}>"
     end
 
     private
