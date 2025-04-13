@@ -71,7 +71,7 @@ RSpec.describe BetterBatch::Query do
       before { spec_util.returning = nil }
       let(:raw_expected_query) do
         <<~SQL
-          select the_primary_key, column_a, column_b, column_c
+          select the_primary_key, column_a, column_b, column_c, other_column, created_at, updated_at
           from (STUB Selected#sql)
           order by ordinal
         SQL
@@ -89,7 +89,9 @@ RSpec.describe BetterBatch::Query do
         ,inserted as (STUB Inserted#sql)
         ,updated as (STUB Updated#sql)
         select coalesce(selected.the_primary_key, inserted.the_primary_key)
-        from selected left join inserted using(column_b, column_c)
+        from selected
+        left join inserted on(selected.the_primary_key is null)
+        left join updated on(updated.the_primary_key is not null)
         order by selected.ordinal
       SQL
     end
@@ -103,12 +105,37 @@ RSpec.describe BetterBatch::Query do
           with selected as (STUB Selected#sql)
           ,inserted as (STUB Inserted#sql)
           select coalesce(selected.the_primary_key, inserted.the_primary_key)
-          from selected left join inserted using(column_a, column_b, column_c)
+          from selected
+          left join inserted on(selected.the_primary_key is null)
           order by selected.ordinal
         SQL
       end
 
       it('omits update') { is_expected.to eq(expected_query) }
+    end
+
+    context 'no return specified' do
+      before { spec_util.returning = nil }
+      let(:raw_expected_query) do
+        <<-SQL
+          with selected as (STUB Selected#sql)
+          ,inserted as (STUB Inserted#sql)
+          ,updated as (STUB Updated#sql)
+          select
+            coalesce(selected.the_primary_key, inserted.the_primary_key),
+            selected.column_a,
+            selected.column_b,
+            selected.column_c,
+            selected.other_column,
+            coalesce(selected.created_at, inserted.created_at),
+            coalesce(updated.updated_at, selected.updated_at)
+          from selected
+          left join inserted on(selected.the_primary_key is null)
+          left join updated on(updated.the_primary_key is not null)
+          order by selected.ordinal
+        SQL
+      end
+      it('returns all columns') { is_expected.to eq(expected_query) }
     end
   end
 end

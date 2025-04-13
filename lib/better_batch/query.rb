@@ -22,7 +22,9 @@ module BetterBatch
       )
       %<updated_clause>s
       select %<upsert_returning>s
-      from selected left join inserted using(%<query_columns_text>s)
+      from selected
+      left join inserted on(selected.%<primary_key>s is null)
+      %<updated_join_clause>s
       order by selected.ordinal
     SQL
 
@@ -30,12 +32,6 @@ module BetterBatch
       ,updated as (
         %<updated_inner>s
       )
-    SQL
-
-    UPDATED_INNER_TEMPLATE = <<~SQL
-      update %<table_name>s
-      set %<update_columns_text>s, updated_at = now()
-      from selected where %<table_name>s.%<primary_key>s = selected.%<primary_key>s
     SQL
 
     def initialize(table_name:, primary_key:, columns:, column_types:, unique_columns:, returning:)
@@ -56,7 +52,7 @@ module BetterBatch
     end
 
     def upsert
-      params = { selected_inner:, inserted_inner:, updated_clause:, upsert_returning:, query_columns_text: }
+      params = { selected_inner:, inserted_inner:, updated_clause:, upsert_returning:, primary_key:, updated_join_clause: }
       format(UPSERT_TEMPLATE, **params)
     end
 
@@ -120,7 +116,15 @@ module BetterBatch
 
     def upsert_returning
       returning.map do |col|
-        "coalesce(selected.#{col}, inserted.#{col})"
+        if col == primary_key
+          "coalesce(selected.#{col}, inserted.#{col})"
+        elsif col == :created_at
+          "coalesce(selected.created_at, inserted.created_at)"
+        elsif col == :updated_at
+          "coalesce(updated.updated_at, selected.updated_at)"
+        else
+          "selected.#{col}"
+        end
       end.join(', ')
     end
 
@@ -132,6 +136,12 @@ module BetterBatch
     # duped Updated
     def update_columns
       @update_columns ||= columns - unique_columns
+    end
+
+    def updated_join_clause
+      return '' if update_columns.empty?
+
+      "left join updated on(updated.#{primary_key} is not null)"
     end
 
     # modified from

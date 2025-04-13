@@ -21,7 +21,10 @@ class SpecUtil
           primary_key => 'bigint',
           column_a: 'character varying(200)',
           column_b: 'bigint',
-          column_c: 'text'
+          column_c: 'text',
+          other_column: 'text',
+          created_at: 'timestamp',
+          updated_at: 'timestamp'
         },
         unique_columns: %i[column_b column_c],
         returning: [primary_key]

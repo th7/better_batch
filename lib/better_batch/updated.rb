@@ -4,6 +4,7 @@ module BetterBatch
       update %<table_name>s
       set %<update_columns_text>s, updated_at = now()
       from selected where %<table_name>s.%<primary_key>s = selected.%<primary_key>s
+      returning %<table_name>s.%<primary_key>s, %<table_name>s.updated_at
     SQL
 
     def initialize(table_name:, primary_key:, columns:, column_types:, unique_columns:, returning:)
