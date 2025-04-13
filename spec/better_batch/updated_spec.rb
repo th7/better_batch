@@ -1,30 +1,8 @@
 require 'better_batch/updated'
 
 RSpec.describe BetterBatch::Updated do
-  let(:table_name) { :the_table }
-  let(:primary_key) { :the_primary_key }
-  let(:columns) { %i[column_a column_b column_c] }
-  let(:base_column_types) do
-    {
-      primary_key => 'bigint',
-      column_a: 'character varying(200)',
-      column_b: 'bigint',
-      column_c: 'text'
-    }
-  end
-  let(:column_types) { base_column_types }
-  let(:unique_columns) { %i[column_b column_c] }
-  let(:returning) { [primary_key] }
-  let(:described_instance) do
-    described_class.new(
-      table_name:,
-      primary_key:,
-      columns:,
-      column_types:,
-      unique_columns:,
-      returning:
-    )
-  end
+  let(:spec_util) { SpecUtil.new }
+  let(:described_instance) { described_class.new(**spec_util.args) }
   let(:expected_query) { SpecUtil.format_sql(raw_expected_query) }
 
   describe '#sql' do
@@ -37,6 +15,6 @@ RSpec.describe BetterBatch::Updated do
       SQL
     end
 
-    it('returns the full upsert query') { is_expected.to eq(expected_query) }
+    it('returns update query') { is_expected.to eq(expected_query) }
   end
 end
