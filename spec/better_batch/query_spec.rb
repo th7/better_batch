@@ -1,21 +1,13 @@
 # frozen_string_literal: true
 
+require 'spec_util'
+
 require 'anbt-sql-formatter/formatter'
 
 require 'better_batch/query'
 
 # rubocop:disable RSpec/MultipleMemoizedHelpers
 RSpec.describe BetterBatch::Query do
-  # modified from
-  # https://github.com/sonota88/anbt-sql-formatter/blob/main/bin/anbt-sql-formatter
-  def format_sql(src)
-    rule = AnbtSql::Rule.new
-    rule.keyword = AnbtSql::Rule::KEYWORD_LOWER_CASE
-    rule.indent_string = '  '
-    formatter = AnbtSql::Formatter.new(rule)
-    formatter.format(src)
-  end
-
   let(:table_name) { :the_table }
   let(:primary_key) { :the_primary_key }
   let(:columns) { %i[column_a column_b column_c] }
@@ -45,7 +37,7 @@ RSpec.describe BetterBatch::Query do
   let(:selected_double) { instance_double(BetterBatch::Selected, sql: 'STUB Selected#sql') }
   let(:inserted_double) { instance_double(BetterBatch::Inserted, sql: 'STUB Inserted#sql') }
   let(:updated_double) { instance_double(BetterBatch::Updated, sql: 'STUB Updated#sql') }
-  let(:expected_query) { format_sql(raw_expected_query) }
+  let(:expected_query) { SpecUtil.format_sql(raw_expected_query) }
 
   before do
     allow(BetterBatch::Selected).to receive(:new).with(**sub_args).and_return(selected_double)
@@ -54,7 +46,7 @@ RSpec.describe BetterBatch::Query do
   end
 
   describe '#select' do
-    subject { format_sql(described_instance.select) }
+    subject { SpecUtil.format_sql(described_instance.select) }
 
 
     let(:raw_expected_query) do
@@ -103,7 +95,7 @@ RSpec.describe BetterBatch::Query do
   end
 
   describe '#upsert' do
-    subject { format_sql(described_instance.upsert) }
+    subject { SpecUtil.format_sql(described_instance.upsert) }
 
     let(:raw_expected_query) do
       <<-SQL

@@ -1,16 +1,6 @@
 require 'better_batch/updated'
 
 RSpec.describe BetterBatch::Updated do
-  # modified from
-  # https://github.com/sonota88/anbt-sql-formatter/blob/main/bin/anbt-sql-formatter
-  def format_sql(src)
-    rule = AnbtSql::Rule.new
-    rule.keyword = AnbtSql::Rule::KEYWORD_LOWER_CASE
-    rule.indent_string = '  '
-    formatter = AnbtSql::Formatter.new(rule)
-    formatter.format(src)
-  end
-
   let(:table_name) { :the_table }
   let(:primary_key) { :the_primary_key }
   let(:columns) { %i[column_a column_b column_c] }
@@ -35,10 +25,10 @@ RSpec.describe BetterBatch::Updated do
       returning:
     )
   end
-  let(:expected_query) { format_sql(raw_expected_query) }
+  let(:expected_query) { SpecUtil.format_sql(raw_expected_query) }
 
   describe '#sql' do
-    subject { format_sql(described_instance.sql) }
+    subject { SpecUtil.format_sql(described_instance.sql) }
     let(:raw_expected_query) do
       <<-SQL
         update the_table
