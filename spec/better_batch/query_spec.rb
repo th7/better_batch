@@ -30,31 +30,37 @@ RSpec.describe BetterBatch::Query do
   let(:column_types) { base_column_types }
   let(:unique_columns) { %i[column_b column_c] }
   let(:returning) { [primary_key] }
-  let(:described_instance) do
-    described_class.new(
+  let(:args) do
+    {
       table_name:,
       primary_key:,
       columns:,
       column_types:,
       unique_columns:,
       returning:
-    )
+    }
   end
+  let(:sub_args) { args.merge(returning: returning || column_types.keys) }
+  let(:described_instance) { described_class.new(**args) }
+  let(:selected_double) { instance_double(BetterBatch::Selected, sql: 'STUB Selected#sql') }
+  let(:inserted_double) { instance_double(BetterBatch::Inserted, sql: 'STUB Inserted#sql') }
+  let(:updated_double) { instance_double(BetterBatch::Updated, sql: 'STUB Updated#sql') }
   let(:expected_query) { format_sql(raw_expected_query) }
+
+  before do
+    allow(BetterBatch::Selected).to receive(:new).with(**sub_args).and_return(selected_double)
+    allow(BetterBatch::Inserted).to receive(:new).with(**sub_args).and_return(inserted_double)
+    allow(BetterBatch::Updated).to receive(:new).with(**sub_args).and_return(updated_double)
+  end
 
   describe '#select' do
     subject { format_sql(described_instance.select) }
 
+
     let(:raw_expected_query) do
       <<~SQL
         select the_primary_key from (
-          select the_table.the_primary_key, input.column_a, input.column_b, input.column_c, ordinal
-          from rows from (
-            jsonb_to_recordset($1)
-            as (column_a character varying(200), column_b bigint, column_c text)
-          ) with ordinality as input(column_a, column_b, column_c, ordinal)
-          left join the_table
-          using(column_b, column_c)
+          STUB Selected#sql
         ) order by ordinal
       SQL
     end
@@ -68,21 +74,15 @@ RSpec.describe BetterBatch::Query do
 
     context 'columns and column types are given in different order' do
       let(:column_types) { base_column_types.to_a.reverse.to_h }
-      it('orders types correctly in query') { p column_types; is_expected.to eq(expected_query) }
+      it('orders types correctly in query') { is_expected.to eq(expected_query) }
     end
 
-    context 'returning more columns' do
+    context 'returning specific columns' do
       let(:returning) { [primary_key, :other_column] }
       let(:raw_expected_query) do
         <<~SQL
           select the_primary_key, other_column from (
-            select the_table.the_primary_key, the_table.other_column, input.column_a, input.column_b, input.column_c, ordinal
-            from rows from (
-              jsonb_to_recordset($1)
-              as (column_a character varying(200), column_b bigint, column_c text)
-            ) with ordinality as input(column_a, column_b, column_c, ordinal)
-            left join the_table
-            using(column_b, column_c)
+            STUB Selected#sql
           ) order by ordinal
         SQL
       end
@@ -94,13 +94,7 @@ RSpec.describe BetterBatch::Query do
       let(:raw_expected_query) do
         <<~SQL
           select the_primary_key, column_a, column_b, column_c from (
-            select the_table.the_primary_key, input.column_a, input.column_b, input.column_c, ordinal
-            from rows from (
-              jsonb_to_recordset($1)
-              as (column_a character varying(200), column_b bigint, column_c text)
-            ) with ordinality as input(column_a, column_b, column_c, ordinal)
-            left join the_table
-            using(column_b, column_c)
+            STUB Selected#sql
           ) order by ordinal
         SQL
       end
@@ -114,27 +108,14 @@ RSpec.describe BetterBatch::Query do
     let(:raw_expected_query) do
       <<-SQL
         with selected as (
-          select the_table.the_primary_key, input.column_a, input.column_b, input.column_c, ordinal
-          from rows from (
-            jsonb_to_recordset($1)
-            as (column_a character varying(200), column_b bigint, column_c text)
-          ) with ordinality as input(column_a, column_b, column_c, ordinal)
-          left join the_table
-          using(column_b, column_c)
+          STUB Selected#sql
         )
         ,inserted as (
-          insert into the_table (column_a, column_b, column_c, created_at, updated_at)
-          select distinct on (column_b, column_c)
-            column_a, column_b, column_c, now() as created_at, now() as updated_at
-          from selected
-          where the_primary_key is null
-          returning the_primary_key, column_b, column_c
+          STUB Inserted#sql
 
         )
         ,updated as (
-          update the_table
-          set column_a = selected.column_a, updated_at = now()
-          from selected where the_table.the_primary_key = selected.the_primary_key
+          STUB Updated#sql
         )
         select coalesce(selected.the_primary_key, inserted.the_primary_key)
         from selected left join inserted using(column_b, column_c)
@@ -149,21 +130,10 @@ RSpec.describe BetterBatch::Query do
       let(:raw_expected_query) do
         <<-SQL
           with selected as (
-            select the_table.the_primary_key, input.column_a, input.column_b, input.column_c, ordinal
-            from rows from (
-              jsonb_to_recordset($1)
-              as (column_a character varying(200), column_b bigint, column_c text)
-            ) with ordinality as input(column_a, column_b, column_c, ordinal)
-            left join the_table
-            using(column_a, column_b, column_c)
+            STUB Selected#sql
           )
           ,inserted as (
-            insert into the_table (column_a, column_b, column_c, created_at, updated_at)
-            select distinct on (column_a, column_b, column_c)
-              column_a, column_b, column_c, now() as created_at, now() as updated_at
-            from selected
-            where the_primary_key is null
-            returning the_primary_key, column_a, column_b, column_c
+            STUB Inserted#sql
           )
           select coalesce(selected.the_primary_key, inserted.the_primary_key)
           from selected left join inserted using(column_a, column_b, column_c)
@@ -171,7 +141,7 @@ RSpec.describe BetterBatch::Query do
         SQL
       end
 
-      it('returns the no update query') { is_expected.to eq(expected_query) }
+      it('omits update') { is_expected.to eq(expected_query) }
     end
   end
 end
