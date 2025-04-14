@@ -1,13 +1,18 @@
 # frozen_string_literal: true
 
+require 'forwardable'
+
 require 'anbt-sql-formatter/formatter'
 
+require 'better_batch/query/inputs'
 require 'better_batch/selected'
 require 'better_batch/inserted'
 require 'better_batch/updated'
 
 module BetterBatch
   class Query # rubocop:disable Metrics/ClassLength
+    extend Forwardable
+
     SELECT_TEMPLATE = <<~SQL
       select %<selected_returning>s from (%<selected_inner>s)
       order by ordinal
@@ -34,15 +39,8 @@ module BetterBatch
       )
     SQL
 
-    def initialize(table_name:, primary_key:, input_columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:)
-      @table_name = table_name
-      @primary_key = primary_key
-      @input_columns = input_columns
-      @column_types = column_types
-      @unique_columns = unique_columns
-      @now_on_insert = now_on_insert
-      @now_on_update = now_on_update
-      @returning = returning.nil? ? @column_types.keys : returning
+    def initialize(**)
+      @inputs = Inputs.new(**)
     end
 
     def select
@@ -63,23 +61,15 @@ module BetterBatch
     end
 
     def inspect
-      vars = [
-        :@table_name,
-        :@primary_key,
-        :@input_columns,
-        :@column_types,
-        :@unique_columns,
-        :@returning
-      ].map { |var| "#{var}=#{instance_variable_get(var).inspect}" }
-      "#<#{self.class.name}:#{vars.join(', ')}>"
+      @inputs.inspect
     end
 
     private
 
-    attr_reader :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :now_on_insert, :now_on_update, :returning
+    def_delegators :@inputs, :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :now_on_insert, :now_on_update, :returning
 
     def selected_returning
-      @selected_returning ||= returning.join(', ')
+      @selected_returning ||= Array(returning).join(', ')
     end
 
     def selected_inner
@@ -87,7 +77,7 @@ module BetterBatch
     end
 
     def build_selected_inner
-      Selected.new(table_name:, primary_key:, input_columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:).sql
+      Selected.new(@inputs).sql
     end
 
     def inserted_inner
@@ -95,7 +85,7 @@ module BetterBatch
     end
 
     def build_inserted_inner
-      Inserted.new(table_name:, primary_key:, input_columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:).sql
+      Inserted.new(@inputs).sql
     end
 
     def updated_clause
@@ -113,7 +103,7 @@ module BetterBatch
     end
 
     def build_updated_inner
-      Updated.new(table_name:, primary_key:, input_columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:).sql
+      Updated.new(@inputs).sql
     end
 
     def upsert_returning

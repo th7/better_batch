@@ -1,9 +1,11 @@
 require 'anbt-sql-formatter/formatter'
 
+require 'better_batch/query'
+
 class SpecUtil
   class << self
     # modified from
-  # https://github.com/sonota88/anbt-sql-formatter/blob/main/bin/anbt-sql-formatter
+    # https://github.com/sonota88/anbt-sql-formatter/blob/main/bin/anbt-sql-formatter
     def format_sql(sql)
       rule = AnbtSql::Rule.new
       rule.keyword = AnbtSql::Rule::KEYWORD_LOWER_CASE
@@ -46,8 +48,8 @@ class SpecUtil
     @args = self.class.default_args
   end
 
-  def sub_args
-    args.merge(returning: args[:returning] || column_types.keys)
+  def inputs
+    BetterBatch::Query.new(**args).instance_variable_get(:@inputs)
   end
 
   def column_types

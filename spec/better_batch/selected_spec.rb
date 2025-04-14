@@ -4,7 +4,7 @@ require 'better_batch/selected'
 
 RSpec.describe BetterBatch::Selected do
   let(:spec_util) { SpecUtil.new }
-  let(:described_instance) { described_class.new(**spec_util.args) }
+  let(:described_instance) { described_class.new(spec_util.inputs) }
   let(:expected_query) { SpecUtil.format_sql(raw_expected_query) }
 
   describe '#sql' do

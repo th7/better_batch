@@ -17,16 +17,16 @@ RSpec.describe BetterBatch::Query do
   let(:updated_double) { instance_double(BetterBatch::Updated, sql: 'STUB Updated#sql') }
 
   before do
-    allow(BetterBatch::Selected).to receive(:new) do |**sub_args|
-      expect(sub_args).to eq(**spec_util.sub_args)
+    allow(BetterBatch::Selected).to receive(:new) do |sub_args|
+      expect(sub_args).to eq(described_instance.instance_variable_get(:@inputs))
       selected_double
     end
-    allow(BetterBatch::Inserted).to receive(:new) do |**sub_args|
-      expect(sub_args).to eq(**spec_util.sub_args)
+    allow(BetterBatch::Inserted).to receive(:new) do |sub_args|
+      expect(sub_args).to eq(described_instance.instance_variable_get(:@inputs))
       inserted_double
     end
-    allow(BetterBatch::Updated).to receive(:new) do |**sub_args|
-      expect(sub_args).to eq(**spec_util.sub_args)
+    allow(BetterBatch::Updated).to receive(:new) do |sub_args|
+      expect(sub_args).to eq(described_instance.instance_variable_get(:@inputs))
       updated_double
     end
   end

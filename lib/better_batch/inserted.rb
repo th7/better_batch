@@ -1,5 +1,9 @@
+require 'forwardable'
+
 module BetterBatch
   class Inserted
+    extend Forwardable
+
     TEMPLATE = <<~SQL
       insert into %<table_name>s (%<columns_text>s)
         select distinct on (%<query_columns_text>s)
@@ -9,15 +13,8 @@ module BetterBatch
         returning %<returning_text>s
     SQL
 
-    def initialize(table_name:, primary_key:, input_columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:)
-      @table_name = table_name
-      @primary_key = primary_key
-      @input_columns = input_columns
-      @column_types = column_types
-      @unique_columns = unique_columns
-      @now_on_insert = now_on_insert
-      @now_on_update = now_on_update
-      @returning = returning.nil? ? @column_types.keys : returning
+    def initialize(inputs)
+      @inputs = inputs
     end
 
     def sql
@@ -26,7 +23,7 @@ module BetterBatch
 
     private
 
-    attr_reader :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :now_on_insert, :returning
+    def_delegators :@inputs, :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :now_on_insert, :returning
 
     def columns_text
       @columns_text ||= (input_columns + now_on_insert).join(', ')

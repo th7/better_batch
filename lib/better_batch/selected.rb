@@ -1,5 +1,9 @@
+require 'forwardable'
+
 module BetterBatch
   class Selected
+    extend Forwardable
+
     TEMPLATE = <<~SQL
       select %<selected_inner_returning>s, %<input_columns_text>s, ordinal
        from rows from (
@@ -10,13 +14,8 @@ module BetterBatch
        using(%<query_columns_text>s)
     SQL
 
-    def initialize(table_name:, primary_key:, input_columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:)
-      @table_name = table_name
-      @primary_key = primary_key
-      @input_columns = input_columns
-      @column_types = column_types
-      @unique_columns = unique_columns
-      @returning = returning.nil? ? @column_types.keys : returning
+    def initialize(inputs)
+      @inputs = inputs
     end
 
     def sql
@@ -27,7 +26,7 @@ module BetterBatch
 
     private
 
-    attr_reader :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :returning
+    def_delegators :@inputs, :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :returning
 
     def selected_inner_returning
       @selected_inner_returning ||= build_selected_inner_returning
