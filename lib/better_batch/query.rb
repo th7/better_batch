@@ -34,12 +34,14 @@ module BetterBatch
       )
     SQL
 
-    def initialize(table_name:, primary_key:, columns:, column_types:, unique_columns:, returning:)
+    def initialize(table_name:, primary_key:, columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:)
       @table_name = table_name
       @primary_key = primary_key
       @columns = columns
       @column_types = column_types
       @unique_columns = unique_columns
+      @now_on_insert = now_on_insert
+      @now_on_update = now_on_update
       @returning = returning.nil? ? @column_types.keys : returning
     end
 
@@ -74,7 +76,7 @@ module BetterBatch
 
     private
 
-    attr_reader :table_name, :columns, :column_types, :unique_columns, :primary_key, :returning
+    attr_reader :table_name, :columns, :column_types, :unique_columns, :primary_key, :now_on_insert, :now_on_update, :returning
 
     def selected_returning
       @selected_returning ||= returning.join(', ')
@@ -85,7 +87,7 @@ module BetterBatch
     end
 
     def build_selected_inner
-      Selected.new(table_name:, primary_key:, columns:, column_types:, unique_columns:, returning:).sql
+      Selected.new(table_name:, primary_key:, columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:).sql
     end
 
     def inserted_inner
@@ -93,7 +95,7 @@ module BetterBatch
     end
 
     def build_inserted_inner
-      Inserted.new(table_name:, primary_key:, columns:, column_types:, unique_columns:, returning:).sql
+      Inserted.new(table_name:, primary_key:, columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:).sql
     end
 
     def updated_clause
@@ -111,17 +113,17 @@ module BetterBatch
     end
 
     def build_updated_inner
-      Updated.new(table_name:, primary_key:, columns:, column_types:, unique_columns:, returning:).sql
+      Updated.new(table_name:, primary_key:, columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:).sql
     end
 
     def upsert_returning
       returning.map do |col|
         if col == primary_key
           "coalesce(selected.#{col}, inserted.#{col})"
-        elsif col == :created_at
-          "coalesce(selected.created_at, inserted.created_at)"
-        elsif col == :updated_at
-          "coalesce(updated.updated_at, selected.updated_at)"
+        elsif Array(now_on_insert).include?(col) && !Array(now_on_update).include?(col)#col == :created_at
+          "coalesce(selected.#{col}, inserted.#{col})"
+        elsif Array(now_on_insert).include?(col) && Array(now_on_update).include?(col)
+          "coalesce(inserted.#{col}, updated.#{col}, selected.#{col})"
         else
           "selected.#{col}"
         end

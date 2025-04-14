@@ -1,3 +1,5 @@
+require 'spec_util'
+
 require 'better_batch/inserted'
 
 RSpec.describe BetterBatch::Inserted do
@@ -30,6 +32,24 @@ RSpec.describe BetterBatch::Inserted do
           from selected
           where the_primary_key is null
           returning the_primary_key, other_column, created_at, updated_at, column_b, column_c
+        SQL
+      end
+      it('returns the insert query with all columns') { is_expected.to eq(expected_query) }
+    end
+
+    context 'no now_on_insert' do
+      before do
+        spec_util.now_on_insert = []
+      end
+
+      let(:raw_expected_query) do
+        <<-SQL
+          insert into the_table (column_a, column_b, column_c)
+          select distinct on (column_b, column_c)
+            column_a, column_b, column_c
+          from selected
+          where the_primary_key is null
+          returning the_primary_key, column_b, column_c
         SQL
       end
       it('returns the insert query with all columns') { is_expected.to eq(expected_query) }

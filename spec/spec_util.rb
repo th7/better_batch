@@ -26,6 +26,8 @@ class SpecUtil
           created_at: 'timestamp',
           updated_at: 'timestamp'
         },
+        now_on_insert: %i[created_at updated_at],
+        now_on_update: :updated_at,
         unique_columns: %i[column_b column_c],
         returning: [primary_key]
       }
@@ -74,5 +76,13 @@ class SpecUtil
 
   def primary_key
     args[:primary_key]
+  end
+
+  def now_on_insert=(new_now_on_insert)
+    args[:now_on_insert] = new_now_on_insert
+  end
+
+  def now_on_update=(new_now_on_update)
+    args[:now_on_update] = new_now_on_update
   end
 end

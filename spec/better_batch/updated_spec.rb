@@ -15,10 +15,25 @@ RSpec.describe BetterBatch::Updated do
         set column_a = selected.column_a, updated_at = now()
         from selected
         where the_table.the_primary_key = selected.the_primary_key
-        returning the_table.the_primary_key, the_table.column_b, the_table.column_c
+        returning the_table.the_primary_key, the_table.column_b, the_table.column_c, the_table.updated_at
       SQL
     end
 
     it('returns update query') { is_expected.to eq(expected_query) }
+
+    context 'no now_on_update' do
+      before { spec_util.now_on_update = [] }
+      let(:raw_expected_query) do
+        <<-SQL
+          update the_table
+          set column_a = selected.column_a
+          from selected
+          where the_table.the_primary_key = selected.the_primary_key
+          returning the_table.the_primary_key, the_table.column_b, the_table.column_c
+        SQL
+      end
+
+      it('does not add the updated_at assignment') { is_expected.to eq(expected_query) }
+    end
   end
 end

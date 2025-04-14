@@ -10,7 +10,7 @@ module BetterBatch
        using(%<query_columns_text>s)
     SQL
 
-    def initialize(table_name:, primary_key:, columns:, column_types:, unique_columns:, returning:)
+    def initialize(table_name:, primary_key:, columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:)
       @table_name = table_name
       @primary_key = primary_key
       @columns = columns

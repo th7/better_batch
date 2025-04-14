@@ -128,7 +128,7 @@ RSpec.describe BetterBatch::Query do
             selected.column_c,
             selected.other_column,
             coalesce(selected.created_at, inserted.created_at),
-            coalesce(updated.updated_at, selected.updated_at)
+            coalesce(inserted.updated_at, updated.updated_at, selected.updated_at)
           from selected
           left join inserted using(column_b, column_c)
           left join updated using(column_b, column_c)
