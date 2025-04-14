@@ -10,10 +10,10 @@ module BetterBatch
        using(%<query_columns_text>s)
     SQL
 
-    def initialize(table_name:, primary_key:, columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:)
+    def initialize(table_name:, primary_key:, input_columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:)
       @table_name = table_name
       @primary_key = primary_key
-      @columns = columns
+      @input_columns = input_columns
       @column_types = column_types
       @unique_columns = unique_columns
       @returning = returning.nil? ? @column_types.keys : returning
@@ -27,31 +27,31 @@ module BetterBatch
 
     private
 
-    attr_reader :table_name, :columns, :column_types, :unique_columns, :primary_key, :returning
+    attr_reader :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :returning
 
     def selected_inner_returning
       @selected_inner_returning ||= build_selected_inner_returning
     end
 
     def build_selected_inner_returning
-      p([primary_key] + returning - columns)
-      qualified_columns = ([primary_key] + returning - columns).uniq.zip([table_name].cycle).map do |col, table|
+      p([primary_key] + returning - input_columns)
+      qualified_columns = ([primary_key] + returning - input_columns).uniq.zip([table_name].cycle).map do |col, table|
         "#{table}.#{col}"
       end
       qualified_columns.join(', ')
     end
 
     def input_columns_text
-      @input_columns_text ||= columns.map { |c| "input.#{c}" }.join(', ')
+      @input_columns_text ||= input_columns.map { |c| "input.#{c}" }.join(', ')
     end
 
     def typed_columns_text
-      @typed_columns_text ||= columns.map { |c| "#{c} #{column_types[c]}" }.join(', ')
+      @typed_columns_text ||= input_columns.map { |c| "#{c} #{column_types[c]}" }.join(', ')
     end
 
     # duped
     def columns_text
-      @columns_text ||= columns.join(', ')
+      @columns_text ||= input_columns.join(', ')
     end
 
     # duped

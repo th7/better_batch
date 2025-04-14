@@ -16,7 +16,7 @@ class SpecUtil
       {
         table_name: :the_table,
         primary_key:,
-        columns: %i[column_a column_b column_c],
+        input_columns: %i[column_a column_b column_c],
         column_types: {
           primary_key => 'bigint',
           column_a: 'character varying(200)',
@@ -58,8 +58,8 @@ class SpecUtil
     args.fetch(:returning)
   end
 
-  def columns
-    args.fetch(:columns)
+  def input_columns
+    args.fetch(:input_columns)
   end
 
   def unique_columns=(new_unique_columns)

@@ -34,10 +34,10 @@ module BetterBatch
       )
     SQL
 
-    def initialize(table_name:, primary_key:, columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:)
+    def initialize(table_name:, primary_key:, input_columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:)
       @table_name = table_name
       @primary_key = primary_key
-      @columns = columns
+      @input_columns = input_columns
       @column_types = column_types
       @unique_columns = unique_columns
       @now_on_insert = now_on_insert
@@ -66,7 +66,7 @@ module BetterBatch
       vars = [
         :@table_name,
         :@primary_key,
-        :@columns,
+        :@input_columns,
         :@column_types,
         :@unique_columns,
         :@returning
@@ -76,7 +76,7 @@ module BetterBatch
 
     private
 
-    attr_reader :table_name, :columns, :column_types, :unique_columns, :primary_key, :now_on_insert, :now_on_update, :returning
+    attr_reader :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :now_on_insert, :now_on_update, :returning
 
     def selected_returning
       @selected_returning ||= returning.join(', ')
@@ -87,7 +87,7 @@ module BetterBatch
     end
 
     def build_selected_inner
-      Selected.new(table_name:, primary_key:, columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:).sql
+      Selected.new(table_name:, primary_key:, input_columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:).sql
     end
 
     def inserted_inner
@@ -95,7 +95,7 @@ module BetterBatch
     end
 
     def build_inserted_inner
-      Inserted.new(table_name:, primary_key:, columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:).sql
+      Inserted.new(table_name:, primary_key:, input_columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:).sql
     end
 
     def updated_clause
@@ -113,7 +113,7 @@ module BetterBatch
     end
 
     def build_updated_inner
-      Updated.new(table_name:, primary_key:, columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:).sql
+      Updated.new(table_name:, primary_key:, input_columns:, column_types:, unique_columns:, now_on_insert:, now_on_update:, returning:).sql
     end
 
     def upsert_returning
@@ -137,7 +137,7 @@ module BetterBatch
 
     # duped Updated
     def update_columns
-      @update_columns ||= columns - unique_columns
+      @update_columns ||= input_columns - unique_columns
     end
 
     def updated_join_clause

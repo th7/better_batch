@@ -99,7 +99,7 @@ RSpec.describe BetterBatch::Query do
     it('returns the full upsert query') { is_expected.to eq(expected_query) }
 
     context 'columns and unique_columns are the same' do
-      before { spec_util.unique_columns = spec_util.columns }
+      before { spec_util.unique_columns = spec_util.input_columns }
       let(:raw_expected_query) do
         <<-SQL
           with selected as (STUB Selected#sql)
