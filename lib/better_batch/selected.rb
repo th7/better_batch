@@ -34,7 +34,6 @@ module BetterBatch
     end
 
     def build_selected_inner_returning
-      p([primary_key] + returning - input_columns)
       qualified_columns = ([primary_key] + returning - input_columns).uniq.zip([table_name].cycle).map do |col, table|
         "#{table}.#{col}"
       end
