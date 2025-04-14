@@ -37,7 +37,7 @@ module BetterBatch
     end
 
     def returning_text
-      @returning_text ||= (returning - columns).join(', ')
+      @returning_text ||= ((returning - columns) + unique_columns).join(', ')
     end
   end
 end

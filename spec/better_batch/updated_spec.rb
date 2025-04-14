@@ -1,3 +1,5 @@
+require 'spec_util'
+
 require 'better_batch/updated'
 
 RSpec.describe BetterBatch::Updated do
@@ -11,8 +13,9 @@ RSpec.describe BetterBatch::Updated do
       <<-SQL
         update the_table
         set column_a = selected.column_a, updated_at = now()
-        from selected where the_table.the_primary_key = selected.the_primary_key
-        returning the_table.the_primary_key, the_table.updated_at
+        from selected
+        where the_table.the_primary_key = selected.the_primary_key
+        returning the_table.the_primary_key, the_table.column_b, the_table.column_c
       SQL
     end
 

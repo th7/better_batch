@@ -90,8 +90,8 @@ RSpec.describe BetterBatch::Query do
         ,updated as (STUB Updated#sql)
         select coalesce(selected.the_primary_key, inserted.the_primary_key)
         from selected
-        left join inserted on(selected.the_primary_key is null)
-        left join updated on(updated.the_primary_key is not null)
+        left join inserted using(column_b, column_c)
+        left join updated using(column_b, column_c)
         order by selected.ordinal
       SQL
     end
@@ -106,7 +106,7 @@ RSpec.describe BetterBatch::Query do
           ,inserted as (STUB Inserted#sql)
           select coalesce(selected.the_primary_key, inserted.the_primary_key)
           from selected
-          left join inserted on(selected.the_primary_key is null)
+          left join inserted using(column_a, column_b, column_c)
           order by selected.ordinal
         SQL
       end
@@ -130,8 +130,8 @@ RSpec.describe BetterBatch::Query do
             coalesce(selected.created_at, inserted.created_at),
             coalesce(updated.updated_at, selected.updated_at)
           from selected
-          left join inserted on(selected.the_primary_key is null)
-          left join updated on(updated.the_primary_key is not null)
+          left join inserted using(column_b, column_c)
+          left join updated using(column_b, column_c)
           order by selected.ordinal
         SQL
       end

@@ -23,7 +23,7 @@ module BetterBatch
       %<updated_clause>s
       select %<upsert_returning>s
       from selected
-      left join inserted on(selected.%<primary_key>s is null)
+      left join inserted using(%<query_columns_text>s)
       %<updated_join_clause>s
       order by selected.ordinal
     SQL
@@ -52,7 +52,7 @@ module BetterBatch
     end
 
     def upsert
-      params = { selected_inner:, inserted_inner:, updated_clause:, upsert_returning:, primary_key:, updated_join_clause: }
+      params = { selected_inner:, inserted_inner:, updated_clause:, upsert_returning:, primary_key:, query_columns_text:, updated_join_clause: }
       format(UPSERT_TEMPLATE, **params)
     end
 
@@ -141,7 +141,7 @@ module BetterBatch
     def updated_join_clause
       return '' if update_columns.empty?
 
-      "left join updated on(updated.#{primary_key} is not null)"
+      "left join updated using(#{query_columns_text})"
     end
 
     # modified from

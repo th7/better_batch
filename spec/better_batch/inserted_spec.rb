@@ -14,7 +14,7 @@ RSpec.describe BetterBatch::Inserted do
           column_a, column_b, column_c, now() as created_at, now() as updated_at
         from selected
         where the_primary_key is null
-        returning the_primary_key
+        returning the_primary_key, column_b, column_c
       SQL
     end
 
@@ -29,7 +29,7 @@ RSpec.describe BetterBatch::Inserted do
             column_a, column_b, column_c, now() as created_at, now() as updated_at
           from selected
           where the_primary_key is null
-          returning the_primary_key, other_column, created_at, updated_at
+          returning the_primary_key, other_column, created_at, updated_at, column_b, column_c
         SQL
       end
       it('returns the insert query with all columns') { is_expected.to eq(expected_query) }

@@ -4,7 +4,7 @@ module BetterBatch
       update %<table_name>s
       set %<update_columns_text>s, updated_at = now()
       from selected where %<table_name>s.%<primary_key>s = selected.%<primary_key>s
-      returning %<table_name>s.%<primary_key>s, %<table_name>s.updated_at
+      returning %<returning_text>s
     SQL
 
     def initialize(table_name:, primary_key:, columns:, column_types:, unique_columns:, returning:)
@@ -17,7 +17,7 @@ module BetterBatch
     end
 
     def sql
-      format(TEMPLATE, table_name:, primary_key:, update_columns_text:)
+      format(TEMPLATE, table_name:, primary_key:, update_columns_text:, returning_text:)
     end
 
     private
@@ -30,6 +30,10 @@ module BetterBatch
 
     def update_columns_text
       @update_columns_text ||= update_columns.map { |c| "#{c} = selected.#{c}" }.join(', ')
+    end
+
+    def returning_text
+      @returning_text ||= ((returning - columns) + unique_columns).map { |c| "#{table_name}.#{c}" }.join(', ')
     end
   end
 end
