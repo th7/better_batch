@@ -9,7 +9,7 @@ require 'better_batch/query'
 # rubocop:disable RSpec/MultipleMemoizedHelpers
 RSpec.describe BetterBatch::Query do
   let(:spec_util) { SpecUtil.new }
-  let(:described_instance) { described_class.new(**spec_util.args) }
+  let(:described_instance) { described_class.new(**spec_util.to_h) }
   let(:expected_query) { SpecUtil.format_sql(raw_expected_query) }
 
   let(:selected_double) { instance_double(BetterBatch::Selected, sql: 'STUB Selected#sql') }
