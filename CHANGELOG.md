@@ -1,13 +1,15 @@
-## [Unreleased]
+## [1.0.2] - 2025-04-15
 
-## [0.1.0] - 2025-04-04
+- Test version to excercise deployment updates
 
-- Initial release
+## [1.0.1] - 2025-04-15
+
+- Fix dependency definition
 
 ## [1.0.0] - 2025-04-15
 
 - Initial feature set
 
-## [1.0.1] - 2025-04-15
+## [0.1.0] - 2025-04-04
 
-- Fix dependency definition
+- Initial release
