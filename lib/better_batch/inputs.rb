@@ -1,10 +1,10 @@
 module BetterBatch
   Inputs = Struct.new(
     :table_name,
+    :primary_key,
     :input_columns,
     :column_types,
     :unique_columns,
-    :primary_key,
     :now_on_insert,
     :now_on_update,
     :returning,

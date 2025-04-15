@@ -5,12 +5,14 @@ module BetterBatch
     extend Forwardable
     def_delegators :@inputs, :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :returning
 
+    ORDINAL = :better_batch_ordinal
+
     TEMPLATE = <<~SQL
       select %<selected_returning>s
        from rows from (
          jsonb_to_recordset($1)
          as (%<typed_columns_sql>s)
-       ) with ordinality as input(%<input_columns_sql>s, better_batch_ordinal)
+       ) with ordinality as input(%<input_columns_sql>s, %<ordinal>s)
        left join %<table_name>s
        using(%<query_columns_sql>s)
     SQL
@@ -20,7 +22,7 @@ module BetterBatch
     end
 
     def sql
-      params = { table_name:, primary_key:, selected_returning:, typed_columns_sql:, input_columns_sql:,
+      params = { table_name:, primary_key:, selected_returning:, typed_columns_sql:, input_columns_sql:, ordinal: ORDINAL,
                  query_columns_sql: }
       format(TEMPLATE, **params)
     end
@@ -60,7 +62,7 @@ module BetterBatch
         primary_key: [primary_key],
         input_columns: input_columns - [primary_key],
         remaining_columns: returning - [primary_key] - input_columns,
-        ordinal: :better_batch_ordinal
+        ordinal: ORDINAL
       }
     end
 

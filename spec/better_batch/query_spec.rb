@@ -39,7 +39,7 @@ RSpec.describe BetterBatch::Query do
       <<~SQL
         select the_primary_key
         from (STUB Selected#sql) selected
-        order by ordinal
+        order by better_batch_ordinal
       SQL
     end
 
@@ -61,7 +61,7 @@ RSpec.describe BetterBatch::Query do
         <<~SQL
           select the_primary_key, other_column
           from (STUB Selected#sql) selected
-          order by ordinal
+          order by better_batch_ordinal
         SQL
       end
       it('returns the select query with more columns') { is_expected.to eq(expected_query) }
@@ -73,7 +73,7 @@ RSpec.describe BetterBatch::Query do
         <<~SQL
           select the_primary_key, column_a, column_b, column_c, other_column, created_at, updated_at
           from (STUB Selected#sql) selected
-          order by ordinal
+          order by better_batch_ordinal
         SQL
       end
       it('returns all columns') { is_expected.to eq(expected_query) }
@@ -85,7 +85,7 @@ RSpec.describe BetterBatch::Query do
         <<~SQL
           select the_primary_key, column_a, column_b, column_c, other_column, created_at, updated_at
           from (STUB Selected#sql) selected
-          order by ordinal
+          order by better_batch_ordinal
         SQL
       end
       it('raises an error') do
@@ -106,7 +106,7 @@ RSpec.describe BetterBatch::Query do
         from selected
         left join inserted using(column_b, column_c)
         left join updated using(column_b, column_c)
-        order by selected.ordinal
+        order by selected.better_batch_ordinal
       SQL
     end
 
@@ -121,7 +121,7 @@ RSpec.describe BetterBatch::Query do
           select coalesce(selected.the_primary_key, inserted.the_primary_key) as the_primary_key
           from selected
           left join inserted using(column_a, column_b, column_c)
-          order by selected.ordinal
+          order by selected.better_batch_ordinal
         SQL
       end
 
@@ -146,7 +146,7 @@ RSpec.describe BetterBatch::Query do
           from selected
           left join inserted using(column_b, column_c)
           left join updated using(column_b, column_c)
-          order by selected.ordinal
+          order by selected.better_batch_ordinal
         SQL
       end
       it('returns all columns') { is_expected.to eq(expected_query) }

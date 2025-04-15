@@ -18,7 +18,7 @@ module BetterBatch
     SELECT_TEMPLATE = <<~SQL
       select %<selected_returning>s
       from (%<selected_sql>s) selected
-      order by ordinal
+      order by %<ordinal>s
     SQL
 
     UPSERT_TEMPLATE = <<~SQL
@@ -26,7 +26,7 @@ module BetterBatch
       select %<upsert_returning>s
       from selected
       %<join_sql>s
-      order by selected.ordinal
+      order by selected.%<ordinal>s
     SQL
 
     UPSERT_NO_RETURN_TEMPLATE = <<~SQL
@@ -41,7 +41,7 @@ module BetterBatch
     def select
       raise Error.new('Select query returning nothing is invalid.') if returning.empty?
 
-      format(SELECT_TEMPLATE, selected_returning:, selected_sql: selected.sql)
+      format(SELECT_TEMPLATE, selected_returning:, selected_sql: selected.sql, ordinal: Selected::ORDINAL)
     end
 
     def select_formatted
@@ -71,7 +71,7 @@ module BetterBatch
     end
 
     def upsert_normal
-      params = { with_sql:, upsert_returning:, join_sql: }
+      params = { with_sql:, upsert_returning:, join_sql:, ordinal: Selected::ORDINAL }
       format(UPSERT_TEMPLATE, **params)
     end
 
