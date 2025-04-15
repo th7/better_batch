@@ -18,23 +18,30 @@ Then:
 
 ## Usage
 
+If you're using ActiveRecord, you'll want to use [better_batch-active_record](https://github.com/th7/better_batch-active_record).
+
 ```ruby
 table_name = :the_table
 primary_key = :the_primary_key
-columns = %i[column_a column_b column_c]
+input_columns = %i[column_a column_b column_c]
 column_types = {
   column_a: 'character varying(200)',
   column_b: 'bigint',
   column_c: 'text'
 }
 unique_columns = %i[column_b column_c]
-
+now_on_insert = %i[created_at updated_at]
+now_on_update = %i[updated_at]
+returning = %i[id]
 query = BetterBatch::Query.new(
   table_name:,
   primary_key:,
-  columns:,
+  input_columns:,
   column_types:,
-  unique_columns:
+  unique_columns:,
+  now_on_insert:,
+  now_on_update:,
+  returning:
 )
 
 data = [
