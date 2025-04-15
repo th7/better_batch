@@ -38,7 +38,7 @@ RSpec.describe BetterBatch::Query do
     let(:raw_expected_query) do
       <<~SQL
         select the_primary_key
-        from (STUB Selected#sql)
+        from (STUB Selected#sql) selected
         order by ordinal
       SQL
     end
@@ -60,7 +60,7 @@ RSpec.describe BetterBatch::Query do
       let(:raw_expected_query) do
         <<~SQL
           select the_primary_key, other_column
-          from (STUB Selected#sql)
+          from (STUB Selected#sql) selected
           order by ordinal
         SQL
       end
@@ -72,7 +72,7 @@ RSpec.describe BetterBatch::Query do
       let(:raw_expected_query) do
         <<~SQL
           select the_primary_key, column_a, column_b, column_c, other_column, created_at, updated_at
-          from (STUB Selected#sql)
+          from (STUB Selected#sql) selected
           order by ordinal
         SQL
       end
@@ -84,7 +84,7 @@ RSpec.describe BetterBatch::Query do
       let(:raw_expected_query) do
         <<~SQL
           select the_primary_key, column_a, column_b, column_c, other_column, created_at, updated_at
-          from (STUB Selected#sql)
+          from (STUB Selected#sql) selected
           order by ordinal
         SQL
       end
@@ -164,6 +164,11 @@ RSpec.describe BetterBatch::Query do
       end
       it('returns no columns') { is_expected.to eq(expected_query) }
     end
+  end
+
+  describe '#returning' do
+    subject { described_instance.returning }
+    it { is_expected.to eq(spec_util.returning) }
   end
 end
 # rubocop:enable RSpec/MultipleMemoizedHelpers

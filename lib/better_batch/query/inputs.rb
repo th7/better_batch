@@ -18,7 +18,7 @@ module BetterBatch
         case self[:returning]
         when nil
           []
-        when '*'
+        when '*', ['*']
           self.column_types.keys
         else
           self[:returning]
@@ -26,13 +26,13 @@ module BetterBatch
       end
 
       def now_on_insert
-        return [] if self[:now_on_insert].nil?
+        return Array(self[:now_on_insert]) unless self[:now_on_insert].is_a?(Array)
 
         self[:now_on_insert]
       end
 
       def now_on_update
-        return [] if self[:now_on_update].nil?
+        return Array(self[:now_on_update]) unless self[:now_on_update].is_a?(Array)
 
         self[:now_on_update]
       end

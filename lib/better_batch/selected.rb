@@ -3,6 +3,7 @@ require 'forwardable'
 module BetterBatch
   class Selected
     extend Forwardable
+    def_delegators :@inputs, :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :returning
 
     TEMPLATE = <<~SQL
       select %<selected_returning>s
@@ -25,8 +26,6 @@ module BetterBatch
     end
 
     private
-
-    def_delegators :@inputs, :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :returning
 
     def selected_returning
       @selected_returning ||= build_selected_returning

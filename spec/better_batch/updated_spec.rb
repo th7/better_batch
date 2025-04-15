@@ -21,6 +21,11 @@ RSpec.describe BetterBatch::Updated do
 
     it('returns update query') { is_expected.to eq(expected_query) }
 
+    context 'updated_at is also returned explicitly' do
+      before { spec_util.returning << :updated_at }
+      it('does not duplicate in returning') { is_expected.to eq(expected_query) }
+    end
+
     context 'no now_on_update' do
       before { spec_util.now_on_update = [] }
       let(:raw_expected_query) do

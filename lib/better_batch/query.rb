@@ -13,9 +13,11 @@ require 'better_batch/updated'
 module BetterBatch
   class Query # rubocop:disable Metrics/ClassLength
     extend Forwardable
+    def_delegators :@inputs, :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :now_on_insert, :now_on_update, :returning
 
     SELECT_TEMPLATE = <<~SQL
-      select %<selected_returning>s from (%<selected_inner>s)
+      select %<selected_returning>s
+      from (%<selected_inner>s) selected
       order by ordinal
     SQL
 
@@ -92,8 +94,6 @@ module BetterBatch
     end
 
     private
-
-    def_delegators :@inputs, :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :now_on_insert, :now_on_update, :returning
 
     def selected_returning
       @selected_returning ||= Array(returning).join(', ')
