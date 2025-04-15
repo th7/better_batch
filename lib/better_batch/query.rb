@@ -13,7 +13,8 @@ require 'better_batch/updated'
 module BetterBatch
   class Query # rubocop:disable Metrics/ClassLength
     extend Forwardable
-    def_delegators :@inputs, :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :now_on_insert, :now_on_update, :returning
+    def_delegators :@inputs, :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :now_on_insert,
+                   :now_on_update, :returning
 
     SELECT_TEMPLATE = <<~SQL
       select %<selected_returning>s
@@ -39,7 +40,7 @@ module BetterBatch
     end
 
     def select
-      raise Error.new('Select query returning nothing is invalid.') if returning.empty?
+      raise Error, 'Select query returning nothing is invalid.' if returning.empty?
 
       format(SELECT_TEMPLATE, selected_returning:, selected_sql: selected.sql, ordinal: Selected::ORDINAL)
     end
@@ -111,7 +112,7 @@ module BetterBatch
       returning.map do |col|
         if col == primary_key
           "coalesce(selected.#{col}, inserted.#{col}) as #{col}"
-        elsif now_on_insert.include?(col) && !now_on_update.include?(col)#col == :created_at
+        elsif now_on_insert.include?(col) && !now_on_update.include?(col) # col == :created_at
           "coalesce(selected.#{col}, inserted.#{col}) as #{col}"
         elsif now_on_insert.include?(col) && now_on_update.include?(col)
           "coalesce(inserted.#{col}, updated.#{col}, selected.#{col}) as #{col}"
@@ -133,7 +134,7 @@ module BetterBatch
       if update_columns.empty?
         [:inserted]
       else
-        [:inserted, :updated]
+        %i[inserted updated]
       end
     end
 
