@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'forwardable'
 
 module BetterBatch
@@ -19,7 +21,8 @@ module BetterBatch
     end
 
     def sql
-      format(TEMPLATE, table_name:, primary_key:, input_columns_sql:, query_columns_sql:, select_columns_sql:, returning_sql:)
+      format(TEMPLATE, table_name:, primary_key:, input_columns_sql:, query_columns_sql:, select_columns_sql:,
+                       returning_sql:)
     end
 
     private
@@ -43,7 +46,7 @@ module BetterBatch
     def build_returning_sql
       return '' if returning.empty?
 
-      'returning ' + ((returning - input_columns) + unique_columns).join(', ')
+      "returning #{((returning - input_columns) + unique_columns).join(', ')}"
     end
 
     def now_as

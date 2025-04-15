@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module BetterBatch
   Inputs = Struct.new(
     :table_name,
@@ -18,7 +20,7 @@ module BetterBatch
       when nil
         []
       when '*', ['*']
-        self.column_types.keys
+        column_types.keys
       else
         self[:returning]
       end

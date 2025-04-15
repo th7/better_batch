@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'forwardable'
 
 module BetterBatch
@@ -50,11 +52,11 @@ module BetterBatch
     end
 
     def prefix_table(parts)
-      parts.map { |part| "#{table_name}.#{part}"}
+      parts.map { |part| "#{table_name}.#{part}" }
     end
 
     def prefix_input(parts)
-      parts.map { |part| "input.#{part}"}
+      parts.map { |part| "input.#{part}" }
     end
 
     def columns
@@ -68,9 +70,9 @@ module BetterBatch
 
     def qualified_columns
       @qualified_columns ||= \
-        prefix_table(columns.fetch(:primary_key)) + \
-        prefix_table(columns.fetch(:remaining_columns)) + \
-        prefix_input(columns.fetch(:input_columns)) + \
+        prefix_table(columns.fetch(:primary_key)) +
+        prefix_table(columns.fetch(:remaining_columns)) +
+        prefix_input(columns.fetch(:input_columns)) +
         [columns.fetch(:ordinal)]
     end
   end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_util'
 
 require 'better_batch/inputs'
@@ -11,16 +13,19 @@ RSpec.describe BetterBatch::Inputs do
 
     context 'when nil' do
       before { described_instance.returning = nil }
+
       it { is_expected.to eq([]) }
     end
 
     context 'when "*"' do
       before { described_instance.returning = '*' }
+
       it { is_expected.to eq(described_instance.column_types.keys) }
     end
 
     context 'when ["*"]' do
       before { described_instance.returning = ['*'] }
+
       it { is_expected.to eq(described_instance.column_types.keys) }
     end
   end
@@ -30,11 +35,13 @@ RSpec.describe BetterBatch::Inputs do
 
     context 'when nil' do
       before { described_instance.now_on_insert = nil }
+
       it { is_expected.to eq([]) }
     end
 
     context 'when symbol' do
       before { described_instance.now_on_insert = :col }
+
       it { is_expected.to eq([:col]) }
     end
   end
@@ -44,11 +51,13 @@ RSpec.describe BetterBatch::Inputs do
 
     context 'when nil' do
       before { described_instance.now_on_update = nil }
+
       it { is_expected.to eq([]) }
     end
 
     context 'when symbol' do
       before { described_instance.now_on_update = :col }
+
       it { is_expected.to eq([:col]) }
     end
   end

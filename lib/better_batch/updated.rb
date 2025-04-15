@@ -1,9 +1,12 @@
+# frozen_string_literal: true
+
 require 'forwardable'
 
 module BetterBatch
   class Updated
     extend Forwardable
-    def_delegators :@inputs, :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :now_on_update, :returning
+    def_delegators :@inputs, :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :now_on_update,
+                   :returning
 
     TEMPLATE = <<~SQL
       update %<table_name>s
@@ -27,7 +30,7 @@ module BetterBatch
     end
 
     def update_columns_sql
-      @update_columns_text ||= update_columns.map { |c| "#{c} = selected.#{c}" }
+      @update_columns_sql ||= update_columns.map { |c| "#{c} = selected.#{c}" }
     end
 
     def update_columns

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_util'
 
 require 'better_batch/updated'
@@ -9,6 +11,7 @@ RSpec.describe BetterBatch::Updated do
 
   describe '#sql' do
     subject { SpecUtil.format_sql(described_instance.sql) }
+
     let(:raw_expected_query) do
       <<-SQL
         update the_table
@@ -23,11 +26,13 @@ RSpec.describe BetterBatch::Updated do
 
     context 'updated_at is also returned explicitly' do
       before { spec_util.returning << :updated_at }
+
       it('does not duplicate in returning') { is_expected.to eq(expected_query) }
     end
 
     context 'no now_on_update' do
       before { spec_util.now_on_update = [] }
+
       let(:raw_expected_query) do
         <<-SQL
           update the_table

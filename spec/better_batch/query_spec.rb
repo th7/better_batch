@@ -34,7 +34,6 @@ RSpec.describe BetterBatch::Query do
   describe '#select' do
     subject { SpecUtil.format_sql(described_instance.select) }
 
-
     let(:raw_expected_query) do
       <<~SQL
         select the_primary_key
@@ -47,16 +46,19 @@ RSpec.describe BetterBatch::Query do
 
     context 'more column types than needed are given' do
       before { spec_util.column_types.merge!(unneeded: 'type') }
+
       it('adds only used types to query') { is_expected.to eq(expected_query) }
     end
 
     context 'columns and column types are given in different order' do
       before { spec_util.reverse_column_types }
+
       it('orders types correctly in query') { is_expected.to eq(expected_query) }
     end
 
     context 'returning specific columns' do
       before { spec_util.returning << :other_column }
+
       let(:raw_expected_query) do
         <<~SQL
           select the_primary_key, other_column
@@ -64,11 +66,13 @@ RSpec.describe BetterBatch::Query do
           order by better_batch_ordinal
         SQL
       end
+
       it('returns the select query with more columns') { is_expected.to eq(expected_query) }
     end
 
     context 'returning all' do
       before { spec_util.returning = '*' }
+
       let(:raw_expected_query) do
         <<~SQL
           select the_primary_key, column_a, column_b, column_c, other_column, created_at, updated_at
@@ -76,11 +80,13 @@ RSpec.describe BetterBatch::Query do
           order by better_batch_ordinal
         SQL
       end
+
       it('returns all columns') { is_expected.to eq(expected_query) }
     end
 
     context 'returning none' do
       before { spec_util.returning = nil }
+
       let(:raw_expected_query) do
         <<~SQL
           select the_primary_key, column_a, column_b, column_c, other_column, created_at, updated_at
@@ -88,6 +94,7 @@ RSpec.describe BetterBatch::Query do
           order by better_batch_ordinal
         SQL
       end
+
       it('raises an error') do
         expect { subject }.to raise_error(BetterBatch::Error, 'Select query returning nothing is invalid.')
       end
@@ -114,6 +121,7 @@ RSpec.describe BetterBatch::Query do
 
     context 'columns and unique_columns are the same' do
       before { spec_util.unique_columns = spec_util.input_columns }
+
       let(:raw_expected_query) do
         <<-SQL
           with selected as (STUB Selected#sql)
@@ -130,6 +138,7 @@ RSpec.describe BetterBatch::Query do
 
     context 'returning all' do
       before { spec_util.returning = '*' }
+
       let(:raw_expected_query) do
         <<-SQL
           with selected as (STUB Selected#sql)
@@ -149,11 +158,13 @@ RSpec.describe BetterBatch::Query do
           order by selected.better_batch_ordinal
         SQL
       end
+
       it('returns all columns') { is_expected.to eq(expected_query) }
     end
 
     context 'returning none' do
       before { spec_util.returning = nil }
+
       let(:raw_expected_query) do
         <<-SQL
           with selected as (STUB Selected#sql)
@@ -162,12 +173,14 @@ RSpec.describe BetterBatch::Query do
           select true as done
         SQL
       end
+
       it('returns no columns') { is_expected.to eq(expected_query) }
     end
   end
 
   describe '#returning' do
     subject { described_instance.returning }
+
     it { is_expected.to eq(spec_util.returning) }
   end
 end

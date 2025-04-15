@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'anbt-sql-formatter/formatter'
 
 require 'better_batch/query'
@@ -48,10 +50,10 @@ class SpecUtil < BetterBatch::Inputs
   end
 
   def inputs
-    BetterBatch::Query.new(**self.to_h).instance_variable_get(:@inputs)
+    BetterBatch::Query.new(**to_h).instance_variable_get(:@inputs)
   end
 
   def reverse_column_types
-    self[:column_types] = self.column_types.to_a.reverse.to_h
+    self[:column_types] = column_types.to_a.reverse.to_h
   end
 end
