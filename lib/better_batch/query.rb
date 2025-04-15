@@ -17,40 +17,21 @@ module BetterBatch
 
     SELECT_TEMPLATE = <<~SQL
       select %<selected_returning>s
-      from (%<selected_inner>s) selected
+      from (%<selected_sql>s) selected
       order by ordinal
     SQL
 
     UPSERT_TEMPLATE = <<~SQL
-      with selected as (
-        %<selected_inner>s
-      )
-      ,inserted as (
-        %<inserted_inner>s
-      )
-      %<updated_clause>s
+      with %<with_sql>s
       select %<upsert_returning>s
       from selected
-      left join inserted using(%<query_columns_text>s)
-      %<updated_join_clause>s
+      %<join_sql>s
       order by selected.ordinal
     SQL
 
     UPSERT_NO_RETURN_TEMPLATE = <<~SQL
-      with selected as (
-        %<selected_inner>s
-      )
-      ,inserted as (
-        %<inserted_inner>s
-      )
-      %<updated_clause>s
+      with %<with_sql>s
       select true as done
-    SQL
-
-    UPDATED_CLAUSE_TEMPLATE = <<~SQL
-      ,updated as (
-        %<updated_inner>s
-      )
     SQL
 
     def initialize(**)
@@ -60,7 +41,7 @@ module BetterBatch
     def select
       raise Error.new('Select query returning nothing is invalid.') if returning.empty?
 
-      format(SELECT_TEMPLATE, selected_returning:, selected_inner:)
+      format(SELECT_TEMPLATE, selected_returning:, selected_sql: selected.sql)
     end
 
     def select_formatted
@@ -75,16 +56,6 @@ module BetterBatch
       end
     end
 
-    def upsert_normal
-      params = { selected_inner:, inserted_inner:, updated_clause:, upsert_returning:, primary_key:, query_columns_text:, updated_join_clause: }
-      format(UPSERT_TEMPLATE, **params)
-    end
-
-    def upsert_no_return
-      params = { selected_inner:, inserted_inner:, updated_clause: }
-      format(UPSERT_NO_RETURN_TEMPLATE, **params)
-    end
-
     def upsert_formatted
       format_sql(upsert)
     end
@@ -95,56 +66,79 @@ module BetterBatch
 
     private
 
+    def upsert_no_return
+      format(UPSERT_NO_RETURN_TEMPLATE, with_sql:)
+    end
+
+    def upsert_normal
+      params = { with_sql:, upsert_returning:, join_sql: }
+      format(UPSERT_TEMPLATE, **params)
+    end
+
+    def with_sql
+      @with_sql ||= build_with_sql
+    end
+
+    def build_with_sql
+      with_parts.map { |name, sql| "#{name} as (#{sql})" }.join(', ')
+    end
+
+    def with_parts
+      if update_columns.empty?
+        { selected: selected.sql, inserted: inserted.sql }
+      else
+        { selected: selected.sql, inserted: inserted.sql, updated: updated.sql }
+      end
+    end
+
+    def selected
+      Selected.new(@inputs)
+    end
+
+    def inserted
+      Inserted.new(@inputs)
+    end
+
+    def updated
+      Updated.new(@inputs)
+    end
+
     def selected_returning
-      @selected_returning ||= Array(returning).join(', ')
-    end
-
-    def selected_inner
-      @selected_inner ||= build_selected_inner
-    end
-
-    def build_selected_inner
-      Selected.new(@inputs).sql
-    end
-
-    def inserted_inner
-      @inserted_inner ||= build_inserted_inner
-    end
-
-    def build_inserted_inner
-      Inserted.new(@inputs).sql
-    end
-
-    def updated_clause
-      @updated_clause ||= build_updated_clause
-    end
-
-    def build_updated_clause
-      return '' if update_columns.empty?
-
-      format(UPDATED_CLAUSE_TEMPLATE, updated_inner:)
-    end
-
-    def updated_inner
-      @updated_inner ||= build_updated_inner
-    end
-
-    def build_updated_inner
-      Updated.new(@inputs).sql
+      @selected_returning ||= returning.join(', ')
     end
 
     def upsert_returning
       returning.map do |col|
         if col == primary_key
           "coalesce(selected.#{col}, inserted.#{col}) as #{col}"
-        elsif Array(now_on_insert).include?(col) && !Array(now_on_update).include?(col)#col == :created_at
+        elsif now_on_insert.include?(col) && !now_on_update.include?(col)#col == :created_at
           "coalesce(selected.#{col}, inserted.#{col}) as #{col}"
-        elsif Array(now_on_insert).include?(col) && Array(now_on_update).include?(col)
+        elsif now_on_insert.include?(col) && now_on_update.include?(col)
           "coalesce(inserted.#{col}, updated.#{col}, selected.#{col}) as #{col}"
         else
           "selected.#{col}"
         end
       end.join(', ')
+    end
+
+    def join_sql
+      @join_sql ||= build_join_sql
+    end
+
+    def build_join_sql
+      join_parts.map { |name| "left join #{name} #{using_sql}" }.join(' ')
+    end
+
+    def join_parts
+      if update_columns.empty?
+        [:inserted]
+      else
+        [:inserted, :updated]
+      end
+    end
+
+    def using_sql
+      "using (#{query_columns_text})"
     end
 
     # duped Selected, Inserted
@@ -155,12 +149,6 @@ module BetterBatch
     # duped Updated
     def update_columns
       @update_columns ||= input_columns - unique_columns
-    end
-
-    def updated_join_clause
-      return '' if update_columns.empty?
-
-      "left join updated using(#{query_columns_text})"
     end
 
     # modified from

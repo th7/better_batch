@@ -22,7 +22,6 @@ module BetterBatch
 
     private
 
-
     def set_sql
       (update_columns_sql + now_as_sql).join(', ')
     end
@@ -36,7 +35,7 @@ module BetterBatch
     end
 
     def now_as_sql
-      @now_as_sql ||= Array(now_on_update).map { |c| "#{c} = now()" }
+      @now_as_sql ||= now_on_update.map { |c| "#{c} = now()" }
     end
 
     def returning_sql
