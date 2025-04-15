@@ -1,9 +1,9 @@
 require 'anbt-sql-formatter/formatter'
 
 require 'better_batch/query'
-require 'better_batch/query/inputs'
+require 'better_batch/inputs'
 
-class SpecUtil < BetterBatch::Query::Inputs
+class SpecUtil < BetterBatch::Inputs
   class << self
     # modified from
     # https://github.com/sonota88/anbt-sql-formatter/blob/main/bin/anbt-sql-formatter

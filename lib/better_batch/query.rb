@@ -5,7 +5,7 @@ require 'forwardable'
 require 'anbt-sql-formatter/formatter'
 
 require 'better_batch'
-require 'better_batch/query/inputs'
+require 'better_batch/inputs'
 require 'better_batch/selected'
 require 'better_batch/inserted'
 require 'better_batch/updated'

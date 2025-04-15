@@ -1,6 +1,8 @@
 require 'spec_util'
 
-RSpec.describe BetterBatch::Query::Inputs do
+require 'better_batch/inputs'
+
+RSpec.describe BetterBatch::Inputs do
   let(:spec_util) { SpecUtil.new }
   let(:described_instance) { described_class.new(**spec_util.to_h) }
 
