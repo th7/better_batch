@@ -26,12 +26,12 @@ module BetterBatch
       (update_columns_sql + now_as_sql).join(', ')
     end
 
-    def update_columns
-      @update_columns ||= input_columns - unique_columns
-    end
-
     def update_columns_sql
       @update_columns_text ||= update_columns.map { |c| "#{c} = selected.#{c}" }
+    end
+
+    def update_columns
+      @update_columns ||= input_columns - unique_columns
     end
 
     def now_as_sql
@@ -39,7 +39,7 @@ module BetterBatch
     end
 
     def returning_sql
-      @returning_sql ||= (returning_cols).map { |c| "#{table_name}.#{c}" }.join(', ')
+      @returning_sql ||= returning_cols.map { |c| "#{table_name}.#{c}" }.join(', ')
     end
 
     def returning_cols

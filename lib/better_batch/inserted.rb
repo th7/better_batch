@@ -6,7 +6,7 @@ module BetterBatch
     def_delegators :@inputs, :table_name, :input_columns, :unique_columns, :primary_key, :now_on_insert, :returning
 
     TEMPLATE = <<~SQL
-      insert into %<table_name>s (%<columns_sql>s)
+      insert into %<table_name>s (%<input_columns_sql>s)
         select distinct on (%<query_columns_sql>s)
           %<select_columns_sql>s
         from selected
@@ -19,20 +19,19 @@ module BetterBatch
     end
 
     def sql
-      format(TEMPLATE, table_name:, primary_key:, columns_sql:, query_columns_sql:, select_columns_sql:, returning_sql:)
+      format(TEMPLATE, table_name:, primary_key:, input_columns_sql:, query_columns_sql:, select_columns_sql:, returning_sql:)
     end
 
     private
 
-    def columns_sql
-      @columns_sql ||= (input_columns + now_on_insert).join(', ')
+    def input_columns_sql
+      @input_columns_sql ||= (input_columns + now_on_insert).join(', ')
     end
 
     def select_columns_sql
       @select_columns_sql ||= (input_columns + now_as).join(', ')
     end
 
-    # duped
     def query_columns_sql
       @query_columns_sql ||= unique_columns.join(', ')
     end

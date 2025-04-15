@@ -6,7 +6,6 @@ require 'anbt-sql-formatter/formatter'
 
 require 'better_batch'
 require 'better_batch/query/inputs'
-require 'better_batch/columns'
 require 'better_batch/selected'
 require 'better_batch/inserted'
 require 'better_batch/updated'
@@ -93,15 +92,15 @@ module BetterBatch
     end
 
     def selected
-      Selected.new(@inputs)
+      @selected ||= Selected.new(@inputs)
     end
 
     def inserted
-      Inserted.new(@inputs)
+      @inserted ||= Inserted.new(@inputs)
     end
 
     def updated
-      Updated.new(@inputs)
+      @updated ||= Updated.new(@inputs)
     end
 
     def selected_returning
@@ -142,12 +141,10 @@ module BetterBatch
       "using (#{query_columns_text})"
     end
 
-    # duped Selected, Inserted
     def query_columns_text
       @query_columns_text ||= unique_columns.join(', ')
     end
 
-    # duped Updated
     def update_columns
       @update_columns ||= input_columns - unique_columns
     end

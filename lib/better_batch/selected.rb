@@ -10,7 +10,7 @@ module BetterBatch
        from rows from (
          jsonb_to_recordset($1)
          as (%<typed_columns_sql>s)
-       ) with ordinality as input(%<columns_sql>s, better_batch_ordinal)
+       ) with ordinality as input(%<input_columns_sql>s, better_batch_ordinal)
        left join %<table_name>s
        using(%<query_columns_sql>s)
     SQL
@@ -20,7 +20,7 @@ module BetterBatch
     end
 
     def sql
-      params = { table_name:, primary_key:, selected_returning:, typed_columns_sql:, columns_sql:,
+      params = { table_name:, primary_key:, selected_returning:, typed_columns_sql:, input_columns_sql:,
                  query_columns_sql: }
       format(TEMPLATE, **params)
     end
@@ -39,21 +39,19 @@ module BetterBatch
       @typed_columns_sql ||= input_columns.map { |c| "#{c} #{column_types[c]}" }.join(', ')
     end
 
-    # duped
-    def columns_sql
-      @columns_sql ||= input_columns.join(', ')
+    def input_columns_sql
+      @input_columns_sql ||= input_columns.join(', ')
     end
 
-    # duped
     def query_columns_sql
       @query_columns_sql ||= unique_columns.join(', ')
     end
 
-    def table(parts)
+    def prefix_table(parts)
       parts.map { |part| "#{table_name}.#{part}"}
     end
 
-    def input(parts)
+    def prefix_input(parts)
       parts.map { |part| "input.#{part}"}
     end
 
@@ -68,9 +66,9 @@ module BetterBatch
 
     def qualified_columns
       @qualified_columns ||= \
-        table(columns.fetch(:primary_key)) + \
-        table(columns.fetch(:remaining_columns)) + \
-        input(columns.fetch(:input_columns)) + \
+        prefix_table(columns.fetch(:primary_key)) + \
+        prefix_table(columns.fetch(:remaining_columns)) + \
+        prefix_input(columns.fetch(:input_columns)) + \
         [columns.fetch(:ordinal)]
     end
   end
