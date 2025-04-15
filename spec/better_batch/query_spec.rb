@@ -17,6 +17,7 @@ RSpec.describe BetterBatch::Query do
   let(:updated_double) { instance_double(BetterBatch::Updated, sql: 'STUB Updated#sql') }
 
   before do
+    # rubocop:disable RSpec/ExpectInHook
     allow(BetterBatch::Selected).to receive(:new) do |sub_args|
       expect(sub_args).to eq(described_instance.instance_variable_get(:@inputs))
       selected_double
@@ -29,6 +30,7 @@ RSpec.describe BetterBatch::Query do
       expect(sub_args).to eq(described_instance.instance_variable_get(:@inputs))
       updated_double
     end
+    # rubocop:enable RSpec/ExpectInHook
   end
 
   describe '#select' do
@@ -96,7 +98,7 @@ RSpec.describe BetterBatch::Query do
       end
 
       it('raises an error') do
-        expect { subject }.to raise_error(BetterBatch::Error, 'Select query returning nothing is invalid.')
+        expect { subject }.to raise_error(BetterBatch::Error, 'Select query returning nothing is invalid.') # rubocop:disable RSpec/NamedSubject
       end
     end
   end

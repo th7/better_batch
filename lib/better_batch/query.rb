@@ -110,16 +110,28 @@ module BetterBatch
 
     def upsert_returning
       returning.map do |col|
-        if col == primary_key
-          "coalesce(selected.#{col}, inserted.#{col}) as #{col}"
-        elsif now_on_insert.include?(col) && !now_on_update.include?(col) # col == :created_at
-          "coalesce(selected.#{col}, inserted.#{col}) as #{col}"
-        elsif now_on_insert.include?(col) && now_on_update.include?(col)
-          "coalesce(inserted.#{col}, updated.#{col}, selected.#{col}) as #{col}"
-        else
-          "selected.#{col}"
-        end
+        qualify_column(col)
       end.join(', ')
+    end
+
+    def qualify_column(col)
+      if (parts = coalesce_parts(col))
+        "coalesce(#{parts.map { |p| "#{p}.#{col}" }.join(', ')}) as #{col}"
+      else
+        "selected.#{col}"
+      end
+    end
+
+    def coalesce_parts(col)
+      if col == primary_key || now_on_insert_only?(col)
+        %i[selected inserted]
+      elsif now_on_insert.include?(col) && now_on_update.include?(col)
+        %i[inserted updated selected]
+      end
+    end
+
+    def now_on_insert_only?(col)
+      now_on_insert.include?(col) && !now_on_update.include?(col)
     end
 
     def join_sql

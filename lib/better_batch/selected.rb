@@ -24,8 +24,8 @@ module BetterBatch
     end
 
     def sql
-      params = { table_name:, primary_key:, selected_returning:, typed_columns_sql:, input_columns_sql:, ordinal: ORDINAL,
-                 query_columns_sql: }
+      params = { table_name:, primary_key:, selected_returning:, typed_columns_sql:, input_columns_sql:,
+                 ordinal: ORDINAL, query_columns_sql: }
       format(TEMPLATE, **params)
     end
 
