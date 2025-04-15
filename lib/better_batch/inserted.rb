@@ -10,7 +10,7 @@ module BetterBatch
           %<select_columns_text>s
         from selected
         where %<primary_key>s is null
-        returning %<returning_text>s
+        %<returning_sql>s
     SQL
 
     def initialize(inputs)
@@ -18,7 +18,7 @@ module BetterBatch
     end
 
     def sql
-      format(TEMPLATE, table_name:, primary_key:, columns_text:, query_columns_text:, select_columns_text:, returning_text:)
+      format(TEMPLATE, table_name:, primary_key:, columns_text:, query_columns_text:, select_columns_text:, returning_sql:)
     end
 
     private
@@ -38,8 +38,14 @@ module BetterBatch
       @query_columns_text ||= unique_columns.join(', ')
     end
 
-    def returning_text
-      @returning_text ||= ((returning - input_columns) + unique_columns).join(', ')
+    def returning_sql
+      @returning_sql ||= build_returning_sql
+    end
+
+    def build_returning_sql
+      return '' if returning.empty?
+
+      'returning ' + ((returning - input_columns) + unique_columns).join(', ')
     end
 
     def now_as

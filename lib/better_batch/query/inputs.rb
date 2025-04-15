@@ -10,10 +10,36 @@ module BetterBatch
       :now_on_update,
       :returning,
       keyword_init: true
-    ) do
+    )
+
+    # this strange (to me) setup avoids method redefinition warnings
+    module InstanceOverrides
       def returning
-        self[:returning] ||= column_types.keys
+        case self[:returning]
+        when nil
+          []
+        when '*'
+          self.column_types.keys
+        else
+          self[:returning]
+        end
       end
+
+      def now_on_insert
+        return [] if self[:now_on_insert].nil?
+
+        self[:now_on_insert]
+      end
+
+      def now_on_update
+        return [] if self[:now_on_update].nil?
+
+        self[:now_on_update]
+      end
+    end
+
+    class Inputs
+      prepend InstanceOverrides
     end
   end
 end

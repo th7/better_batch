@@ -4,6 +4,7 @@ require 'forwardable'
 
 require 'anbt-sql-formatter/formatter'
 
+require 'better_batch'
 require 'better_batch/query/inputs'
 require 'better_batch/selected'
 require 'better_batch/inserted'
@@ -33,6 +34,17 @@ module BetterBatch
       order by selected.ordinal
     SQL
 
+    UPSERT_NO_RETURN_TEMPLATE = <<~SQL
+      with selected as (
+        %<selected_inner>s
+      )
+      ,inserted as (
+        %<inserted_inner>s
+      )
+      %<updated_clause>s
+      select true as done
+    SQL
+
     UPDATED_CLAUSE_TEMPLATE = <<~SQL
       ,updated as (
         %<updated_inner>s
@@ -44,6 +56,8 @@ module BetterBatch
     end
 
     def select
+      raise Error.new('Select query returning nothing is invalid.') if returning.empty?
+
       format(SELECT_TEMPLATE, selected_returning:, selected_inner:)
     end
 
@@ -52,8 +66,21 @@ module BetterBatch
     end
 
     def upsert
+      if returning.empty?
+        upsert_no_return
+      else
+        upsert_normal
+      end
+    end
+
+    def upsert_normal
       params = { selected_inner:, inserted_inner:, updated_clause:, upsert_returning:, primary_key:, query_columns_text:, updated_join_clause: }
       format(UPSERT_TEMPLATE, **params)
+    end
+
+    def upsert_no_return
+      params = { selected_inner:, inserted_inner:, updated_clause: }
+      format(UPSERT_NO_RETURN_TEMPLATE, **params)
     end
 
     def upsert_formatted
@@ -109,11 +136,11 @@ module BetterBatch
     def upsert_returning
       returning.map do |col|
         if col == primary_key
-          "coalesce(selected.#{col}, inserted.#{col})"
+          "coalesce(selected.#{col}, inserted.#{col}) as #{col}"
         elsif Array(now_on_insert).include?(col) && !Array(now_on_update).include?(col)#col == :created_at
-          "coalesce(selected.#{col}, inserted.#{col})"
+          "coalesce(selected.#{col}, inserted.#{col}) as #{col}"
         elsif Array(now_on_insert).include?(col) && Array(now_on_update).include?(col)
-          "coalesce(inserted.#{col}, updated.#{col}, selected.#{col})"
+          "coalesce(inserted.#{col}, updated.#{col}, selected.#{col}) as #{col}"
         else
           "selected.#{col}"
         end

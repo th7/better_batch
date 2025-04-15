@@ -67,8 +67,8 @@ RSpec.describe BetterBatch::Query do
       it('returns the select query with more columns') { is_expected.to eq(expected_query) }
     end
 
-    context 'no return specified' do
-      before { spec_util.returning = nil }
+    context 'returning all' do
+      before { spec_util.returning = '*' }
       let(:raw_expected_query) do
         <<~SQL
           select the_primary_key, column_a, column_b, column_c, other_column, created_at, updated_at
@@ -77,6 +77,20 @@ RSpec.describe BetterBatch::Query do
         SQL
       end
       it('returns all columns') { is_expected.to eq(expected_query) }
+    end
+
+    context 'returning none' do
+      before { spec_util.returning = nil }
+      let(:raw_expected_query) do
+        <<~SQL
+          select the_primary_key, column_a, column_b, column_c, other_column, created_at, updated_at
+          from (STUB Selected#sql)
+          order by ordinal
+        SQL
+      end
+      it('raises an error') do
+        expect { subject }.to raise_error(BetterBatch::Error, 'Select query returning nothing is invalid.')
+      end
     end
   end
 
@@ -88,7 +102,7 @@ RSpec.describe BetterBatch::Query do
         with selected as (STUB Selected#sql)
         ,inserted as (STUB Inserted#sql)
         ,updated as (STUB Updated#sql)
-        select coalesce(selected.the_primary_key, inserted.the_primary_key)
+        select coalesce(selected.the_primary_key, inserted.the_primary_key) as the_primary_key
         from selected
         left join inserted using(column_b, column_c)
         left join updated using(column_b, column_c)
@@ -104,7 +118,7 @@ RSpec.describe BetterBatch::Query do
         <<-SQL
           with selected as (STUB Selected#sql)
           ,inserted as (STUB Inserted#sql)
-          select coalesce(selected.the_primary_key, inserted.the_primary_key)
+          select coalesce(selected.the_primary_key, inserted.the_primary_key) as the_primary_key
           from selected
           left join inserted using(column_a, column_b, column_c)
           order by selected.ordinal
@@ -114,21 +128,21 @@ RSpec.describe BetterBatch::Query do
       it('omits update') { is_expected.to eq(expected_query) }
     end
 
-    context 'no return specified' do
-      before { spec_util.returning = nil }
+    context 'returning all' do
+      before { spec_util.returning = '*' }
       let(:raw_expected_query) do
         <<-SQL
           with selected as (STUB Selected#sql)
           ,inserted as (STUB Inserted#sql)
           ,updated as (STUB Updated#sql)
           select
-            coalesce(selected.the_primary_key, inserted.the_primary_key),
+            coalesce(selected.the_primary_key, inserted.the_primary_key) as the_primary_key,
             selected.column_a,
             selected.column_b,
             selected.column_c,
             selected.other_column,
-            coalesce(selected.created_at, inserted.created_at),
-            coalesce(inserted.updated_at, updated.updated_at, selected.updated_at)
+            coalesce(selected.created_at, inserted.created_at) as created_at,
+            coalesce(inserted.updated_at, updated.updated_at, selected.updated_at) as updated_at
           from selected
           left join inserted using(column_b, column_c)
           left join updated using(column_b, column_c)
@@ -136,6 +150,19 @@ RSpec.describe BetterBatch::Query do
         SQL
       end
       it('returns all columns') { is_expected.to eq(expected_query) }
+    end
+
+    context 'returning none' do
+      before { spec_util.returning = nil }
+      let(:raw_expected_query) do
+        <<-SQL
+          with selected as (STUB Selected#sql)
+          ,inserted as (STUB Inserted#sql)
+          ,updated as (STUB Updated#sql)
+          select true as done
+        SQL
+      end
+      it('returns no columns') { is_expected.to eq(expected_query) }
     end
   end
 end

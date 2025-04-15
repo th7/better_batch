@@ -22,8 +22,8 @@ RSpec.describe BetterBatch::Inserted do
 
     it('returns the insert query') { is_expected.to eq(expected_query) }
 
-    context 'no returning specified' do
-      before { spec_util.returning = nil }
+    context 'returning all' do
+      before { spec_util.returning = '*' }
       let(:raw_expected_query) do
         <<-SQL
           insert into the_table (column_a, column_b, column_c, created_at, updated_at)
@@ -35,6 +35,20 @@ RSpec.describe BetterBatch::Inserted do
         SQL
       end
       it('returns the insert query with all columns') { is_expected.to eq(expected_query) }
+    end
+
+    context 'returning none' do
+      before { spec_util.returning = nil }
+      let(:raw_expected_query) do
+        <<-SQL
+          insert into the_table (column_a, column_b, column_c, created_at, updated_at)
+          select distinct on (column_b, column_c)
+            column_a, column_b, column_c, now() as created_at, now() as updated_at
+          from selected
+          where the_primary_key is null
+        SQL
+      end
+      it('returns the insert query with no return columns') { is_expected.to eq(expected_query) }
     end
 
     context 'no now_on_insert' do
@@ -52,7 +66,7 @@ RSpec.describe BetterBatch::Inserted do
           returning the_primary_key, column_b, column_c
         SQL
       end
-      it('returns the insert query with all columns') { is_expected.to eq(expected_query) }
+      it('does not set any columns to now') { is_expected.to eq(expected_query) }
     end
   end
 end

@@ -5,13 +5,13 @@ module BetterBatch
     extend Forwardable
 
     TEMPLATE = <<~SQL
-      select %<selected_inner_returning>s, %<input_columns_text>s, ordinal
+      select %<selected_returning>s
        from rows from (
          jsonb_to_recordset($1)
-         as (%<typed_columns_text>s)
-       ) with ordinality as input(%<columns_text>s, ordinal)
+         as (%<typed_columns_sql>s)
+       ) %<with_ordinality>s %<as_input>s
        left join %<table_name>s
-       using(%<query_columns_text>s)
+       using(%<query_columns_sql>s)
     SQL
 
     def initialize(inputs)
@@ -19,8 +19,8 @@ module BetterBatch
     end
 
     def sql
-      params = { table_name:, primary_key:, selected_inner_returning:, input_columns_text:, typed_columns_text:, columns_text:,
-                 query_columns_text: }
+      params = { table_name:, primary_key:, selected_returning:, typed_columns_sql:, with_ordinality:, as_input:,
+                 query_columns_sql: }
       format(TEMPLATE, **params)
     end
 
@@ -28,33 +28,66 @@ module BetterBatch
 
     def_delegators :@inputs, :table_name, :input_columns, :column_types, :unique_columns, :primary_key, :returning
 
-    def selected_inner_returning
-      @selected_inner_returning ||= build_selected_inner_returning
+    def selected_returning
+      @selected_returning ||= build_selected_returning
     end
 
-    def build_selected_inner_returning
-      qualified_columns = ([primary_key] + returning - input_columns).uniq.zip([table_name].cycle).map do |col, table|
-        "#{table}.#{col}"
+    def build_selected_returning
+      return ([qualified_pk] + qualifed_inputs).join(', ') if returning.empty?
+
+      ([qualified_pk] + qualified_columns + qualifed_inputs + ['ordinal']).uniq.join(', ')
+    end
+
+    def qualified_pk
+      "#{table_name}.#{primary_key}"
+    end
+
+    def qualified_columns
+      (returning - input_columns).map do |col|
+        "#{table_name}.#{col}"
       end
-      qualified_columns.join(', ')
     end
 
-    def input_columns_text
-      @input_columns_text ||= input_columns.map { |c| "input.#{c}" }.join(', ')
+    def qualifed_inputs
+      @input_qualified_columns ||= input_columns.map { |c| "input.#{c}" }
     end
 
-    def typed_columns_text
-      @typed_columns_text ||= input_columns.map { |c| "#{c} #{column_types[c]}" }.join(', ')
+    def typed_columns_sql
+      @typed_columns_sql ||= input_columns.map { |c| "#{c} #{column_types[c]}" }.join(', ')
+    end
+
+    def with_ordinality
+      @with_ordinality ||= build_with_ordinality
+    end
+
+    def build_with_ordinality
+      if returning.empty?
+        ''
+      else
+        'with ordinality'
+      end
+    end
+
+    def as_input
+      @as_input ||= build_as_input
+    end
+
+    def build_as_input
+      if returning.empty?
+        "as input(#{columns_sql})"
+      else
+        "as input(#{columns_sql}, ordinal)"
+      end
     end
 
     # duped
-    def columns_text
-      @columns_text ||= input_columns.join(', ')
+    def columns_sql
+      @columns_sql ||= input_columns.join(', ')
     end
 
     # duped
-    def query_columns_text
-      @query_columns_text ||= unique_columns.join(', ')
+    def query_columns_sql
+      @query_columns_sql ||= unique_columns.join(', ')
     end
   end
 end
