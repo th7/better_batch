@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = 'A simple SQL query builder for better batch operations.'
   spec.homepage = 'https://github.com/th7/better_batch'
   spec.license = 'MIT'
-  spec.required_ruby_version = '>= 3.1.0'
+  spec.required_ruby_version = '>= 3.2.0'
 
   spec.metadata['allowed_push_host'] = 'https://rubygems.org'
 
