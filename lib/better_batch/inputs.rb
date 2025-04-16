@@ -15,27 +15,39 @@ module BetterBatch
 
   # this strange (to me) setup avoids method redefinition warnings
   module InstanceOverrides
-    def returning
+    def preprocess!
+      self[:column_types].transform_keys!(&:to_sym)
+      preprocess_returning
+      ensure_lists!
+      symbolize_lists!
+      symbolize!
+    end
+
+    private
+
+    def preprocess_returning
       case self[:returning]
-      when nil
-        []
       when '*', ['*']
-        column_types.keys
-      else
-        self[:returning]
+        self[:returning] = column_types.keys
       end
     end
 
-    def now_on_insert
-      return Array(self[:now_on_insert]) unless self[:now_on_insert].is_a?(Array)
-
-      self[:now_on_insert]
+    def ensure_lists!
+      %i[input_columns unique_columns now_on_insert now_on_update returning].each do |field|
+        self[field] = Array(self[field])
+      end
     end
 
-    def now_on_update
-      return Array(self[:now_on_update]) unless self[:now_on_update].is_a?(Array)
+    def symbolize_lists!
+      %i[input_columns unique_columns now_on_insert now_on_update returning].each do |field|
+        self[field].map!(&:to_sym)
+      end
+    end
 
-      self[:now_on_update]
+    def symbolize!
+      %i[table_name primary_key].each do |field|
+        self[field] = self[field].to_sym
+      end
     end
   end
 

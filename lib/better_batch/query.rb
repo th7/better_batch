@@ -37,6 +37,7 @@ module BetterBatch
 
     def initialize(**)
       @inputs = Inputs.new(**)
+      @inputs.preprocess!
     end
 
     def select

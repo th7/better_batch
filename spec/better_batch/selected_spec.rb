@@ -97,5 +97,11 @@ RSpec.describe BetterBatch::Selected do
 
       it('does not duplicate the column') { is_expected.to eq(expected_query) }
     end
+
+    context 'string keys in input' do
+      before { spec_util.input_columns.map!(&:to_s) }
+
+      it('returns the select query') { is_expected.to eq(expected_query) }
+    end
   end
 end
