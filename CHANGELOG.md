@@ -1,3 +1,7 @@
+## [1.0.3] - 2025-04-15
+
+- Improve handling of inputs
+
 ## [1.0.2] - 2025-04-15
 
 - Test version to excercise deployment updates
