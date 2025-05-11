@@ -26,6 +26,27 @@ RSpec.describe BetterBatch::Selected do
 
     it('returns the select query') { is_expected.to eq(expected_query) }
 
+    context 'columns include a reserved word' do
+      before do
+        spec_util.input_columns << :order
+        spec_util.column_types.merge!(order: 'integer')
+      end
+
+      let(:raw_expected_query) do
+        <<~SQL
+          select the_table.the_primary_key, input.column_a, input.column_b, input.column_c, input."order", better_batch_ordinal
+          from rows from (
+            jsonb_to_recordset($1)
+            as (column_a character varying(200), column_b bigint, column_c text, "order" integer)
+          ) with ordinality as input(column_a, column_b, column_c, "order", better_batch_ordinal)
+          left join the_table
+          using(column_b, column_c)
+        SQL
+      end
+
+      it('quotes the reserved column') { is_expected.to eq(expected_query) }
+    end
+
     context 'more column types than needed are given' do
       before { spec_util.column_types.merge!(unneeded: 'type') }
 
