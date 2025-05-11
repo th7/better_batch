@@ -18,7 +18,7 @@ module BetterBatch
   # this strange (to me) setup avoids method redefinition warnings
   module InstanceOverrides
     def preprocess!
-      self[:column_types].transform_keys!(&BetterBatch::Word.method(:new))
+      self[:column_types] = self[:column_types].transform_keys(&BetterBatch::Word.method(:new))
       preprocess_returning
       ensure_lists!
       to_word_lists!
@@ -42,7 +42,7 @@ module BetterBatch
 
     def to_word_lists!
       %i[input_columns unique_columns now_on_insert now_on_update returning].each do |field|
-        self[field].map! do |it|
+        self[field] = self[field].map do |it|
           if it.is_a?(BetterBatch::Word)
             it
           else
