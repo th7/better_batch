@@ -40,7 +40,7 @@ module BetterBatch
     end
 
     def typed_columns_sql
-      @typed_columns_sql ||= input_columns.map { |c| "#{c} #{column_types[c]}" }.join(', ')
+      @typed_columns_sql ||= input_columns.map { |c| "#{c} #{column_types.fetch(c)}" }.join(', ')
     end
 
     def input_columns_sql

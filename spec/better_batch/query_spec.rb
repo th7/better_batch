@@ -46,6 +46,20 @@ RSpec.describe BetterBatch::Query do
 
     it('returns the select query') { is_expected.to eq(expected_query) }
 
+    context 'returning a reserved word' do
+      before { spec_util.returning = :order }
+
+      let(:raw_expected_query) do
+        <<~SQL
+          select "order"
+          from (STUB Selected#sql) selected
+          order by better_batch_ordinal
+        SQL
+      end
+
+      it('quotes the primary key') { is_expected.to eq(expected_query) }
+    end
+
     context 'more column types than needed are given' do
       before { spec_util.column_types.merge!(unneeded: 'type') }
 

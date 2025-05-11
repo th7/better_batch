@@ -3,6 +3,7 @@
 require 'spec_util'
 
 require 'better_batch/inputs'
+require 'better_batch/word'
 
 RSpec.describe BetterBatch::Inputs do
   let(:spec_util) { SpecUtil.new }
@@ -18,27 +19,28 @@ RSpec.describe BetterBatch::Inputs do
       [
         %i[input_columns unique_columns now_on_insert now_on_update returning],
         [%w[a b c]],
-        %i[a b c]
+        %w[a b c].map(&BetterBatch::Word.method(:new))
+        # %i[a b c]
       ],
       [
         %i[input_columns unique_columns now_on_insert now_on_update returning],
         [:col], # :col is passed to test, not [:col]
-        [:col]
+        [:col].map(&BetterBatch::Word.method(:new))
       ],
       [
         %i[table_name primary_key],
-        ['make_me_a_symbol'],
-        :make_me_a_symbol
+        ['make_me_a_word'],
+        BetterBatch::Word.new('make_me_a_word')
       ],
       [
         %i[column_types],
-        [{ 'symbolize_me' => :anything }],
-        { symbolize_me: :anything }
+        [{ 'make_me_a_word' => 'anything' }],
+        { BetterBatch::Word.new('make_me_a_word') => 'anything' }
       ],
       [
         %i[returning],
         ['*', ['*']],
-        SpecUtil.new.column_types.keys
+        SpecUtil.new.column_types.keys.map(&BetterBatch::Word.method(:new))
       ]
     ].each do |fields, initials, expected|
       fields.each do |field|

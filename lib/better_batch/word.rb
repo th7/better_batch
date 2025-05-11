@@ -4,16 +4,18 @@ require 'better_batch/postgresql_reserved'
 
 module BetterBatch
   class Word
-    attr_reader :input
+    attr_reader :input, :hash
 
     def initialize(input)
-      @input = input.to_s
-      downcased = input.downcase
-      @output = if POSTGRESQL_RESERVED.include?(downcased) || input != downcased
-                  "\"#{@input}\""
+      @input = input.to_sym
+      @input_str = input.to_s.freeze
+      downcased = @input_str.downcase
+      @output = if POSTGRESQL_RESERVED.include?(downcased) || @input_str != downcased
+                  "\"#{@input_str}\"".freeze
                 else
-                  @input
+                  @input_str
                 end
+      @hash = @input.hash
     end
 
     def to_s
@@ -24,16 +26,15 @@ module BetterBatch
       case other
       when self.class
         input == other.input
-      when String
-        input == other
-      when Symbol
-        input == other.to_s
       else
         raise "Did not know how to compare to #{other.inspect}."
       end
     end
+    # needed for list subtraction and hash keys
+    alias eql? ==
 
-    # needed for list subtraction
-    alias :eql? :==
+    def inspect
+      "#<BetterBatch::Word @output=#{@output.inspect}>"
+    end
   end
 end

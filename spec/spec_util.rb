@@ -5,7 +5,7 @@ require 'anbt-sql-formatter/formatter'
 require 'better_batch/query'
 require 'better_batch/inputs'
 
-class SpecUtil < BetterBatch::Inputs
+class SpecUtil < BetterBatch::InputsStruct
   class << self
     PRIMARY_KEY = :the_primary_key
     DEFAULT_ARGS = {
