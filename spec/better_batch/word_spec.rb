@@ -5,6 +5,17 @@ require 'better_batch/word'
 RSpec.describe BetterBatch::Word do
   let(:described_instance) { described_class.new(input) }
 
+  describe 'list subtraction' do
+    let(:input) { 'something' }
+    it 'will be removed by a matching symbol' do
+      expect([described_instance] - [:something]).to eq([])
+    end
+
+    it 'will not be removed by a non-matching symbol' do
+      expect([described_instance] - [:something_else]).to eq([described_instance])
+    end
+  end
+
   describe '#.to_s' do
     subject { described_instance.to_s }
 

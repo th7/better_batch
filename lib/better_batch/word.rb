@@ -32,5 +32,8 @@ module BetterBatch
         raise "Did not know how to compare to #{other.inspect}."
       end
     end
+
+    # needed for list subtraction
+    alias :eql? :==
   end
 end
