@@ -14,6 +14,14 @@ RSpec.describe BetterBatch::Word do
     it 'will not be removed by a non-matching symbol' do
       expect([described_instance] - [:something_else]).to eq([described_instance])
     end
+
+    it 'will be removed by a matching word' do
+      expect([described_instance] - [described_class.new(input.to_sym)]).to eq([])
+    end
+
+    it 'will not be removed by a non-matching word' do
+      expect([described_instance] - [described_class.new(:something_else)]).to eq([described_instance])
+    end
   end
 
   describe '#.to_s' do
