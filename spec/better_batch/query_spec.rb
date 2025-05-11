@@ -197,7 +197,7 @@ RSpec.describe BetterBatch::Query do
   describe '#returning' do
     subject { described_instance.returning }
 
-    it { is_expected.to eq(spec_util.returning) }
+    it { is_expected.to eq(spec_util.returning.map(&BetterBatch::Word.method(:new))) }
   end
 end
 # rubocop:enable RSpec/MultipleMemoizedHelpers

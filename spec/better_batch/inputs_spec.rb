@@ -7,7 +7,8 @@ require 'better_batch/word'
 
 RSpec.describe BetterBatch::Inputs do
   let(:spec_util) { SpecUtil.new }
-  let(:described_instance) { described_class.new(**spec_util.to_h) }
+  let(:inputs) { spec_util.to_h }
+  let(:described_instance) { described_class.new(**inputs) }
 
   describe '#preprocess!' do
     [
@@ -53,6 +54,13 @@ RSpec.describe BetterBatch::Inputs do
           end
         end
       end
+    end
+
+    it 'does not mutate inputs' do
+      expect { described_instance.preprocess! }
+        .not_to(change do
+                  [spec_util.column_types.keys.first, spec_util.input_columns.first, spec_util.unique_columns.first]
+                end)
     end
   end
 end
